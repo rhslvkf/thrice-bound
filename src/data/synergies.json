@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "synergies": [
+    {
+      "id": "synergy.beast",
+      "name": "Wild Pack",
+      "tag": "Beast",
+      "description": "Beasts fight faster the more of them hunt together.",
+      "thresholds": [
+        {
+          "count": 3,
+          "description": "Beast allies attack 15% faster.",
+          "effects": [
+            {
+              "kind": "statMod",
+              "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Beast" },
+              "stat": "atkSpeed",
+              "op": "mult",
+              "amount": 0.15,
+              "durationMs": null
+            }
+          ]
+        },
+        {
+          "count": 5,
+          "description": "Beast allies attack 30% faster and move 15% faster.",
+          "effects": [
+            {
+              "kind": "statMod",
+              "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Beast" },
+              "stat": "atkSpeed",
+              "op": "mult",
+              "amount": 0.3,
+              "durationMs": null
+            },
+            {
+              "kind": "statMod",
+              "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Beast" },
+              "stat": "moveSpeed",
+              "op": "mult",
+              "amount": 0.15,
+              "durationMs": null
+            }
+          ]
+        }
+      ],
+      "artKey": "synergy/beast"
+    },
+    {
+      "id": "synergy.undead",
+      "name": "Unquiet Dead",
+      "tag": "Undead",
+      "description": "The dead knit themselves back together mid-battle.",
+      "thresholds": [
+        {
+          "count": 3,
+          "description": "Undead allies regenerate 2% of max HP every 2s.",
+          "effects": [
+            {
+              "kind": "periodic",
+              "periodMs": 2000,
+              "effects": [
+                {
+                  "kind": "heal",
+                  "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Undead" },
+                  "amount": 0,
+                  "scaleWithMaxHp": 0.02
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "count": 5,
+          "description": "Undead allies regenerate 5% of max HP every 2s and gain +6 attack.",
+          "effects": [
+            {
+              "kind": "periodic",
+              "periodMs": 2000,
+              "effects": [
+                {
+                  "kind": "heal",
+                  "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Undead" },
+                  "amount": 0,
+                  "scaleWithMaxHp": 0.05
+                }
+              ]
+            },
+            {
+              "kind": "statMod",
+              "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Undead" },
+              "stat": "atk",
+              "op": "add",
+              "amount": 6,
+              "durationMs": null
+            }
+          ]
+        }
+      ],
+      "artKey": "synergy/undead"
+    },
+    {
+      "id": "synergy.arcane",
+      "name": "Woven Sigils",
+      "tag": "Arcane",
+      "description": "Overlapping sigils amplify every spell on the field.",
+      "thresholds": [
+        {
+          "count": 3,
+          "description": "Arcane allies deal 20% more attack damage.",
+          "effects": [
+            {
+              "kind": "statMod",
+              "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Arcane" },
+              "stat": "atk",
+              "op": "mult",
+              "amount": 0.2,
+              "durationMs": null
+            }
+          ]
+        },
+        {
+          "count": 5,
+          "description": "Arcane allies deal 40% more attack damage and enemies start the battle weakened.",
+          "effects": [
+            {
+              "kind": "statMod",
+              "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Arcane" },
+              "stat": "atk",
+              "op": "mult",
+              "amount": 0.4,
+              "durationMs": null
+            },
+            {
+              "kind": "status",
+              "target": { "mode": "allEnemies", "count": null, "radius": null, "tag": null },
+              "status": "weaken",
+              "durationMs": 8000,
+              "magnitude": 0.15
+            }
+          ]
+        }
+      ],
+      "artKey": "synergy/arcane"
+    },
+    {
+      "id": "synergy.steel",
+      "name": "Forged Line",
+      "tag": "Steel",
+      "description": "Steel holds the line behind layered plating.",
+      "thresholds": [
+        {
+          "count": 3,
+          "description": "Steel allies start the battle with a shield worth 15% of max HP.",
+          "effects": [
+            {
+              "kind": "shield",
+              "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Steel" },
+              "amount": 0,
+              "scaleWithMaxHp": 0.15,
+              "durationMs": null
+            }
+          ]
+        },
+        {
+          "count": 5,
+          "description": "Steel allies start with a 30% max HP shield and gain 10% max HP.",
+          "effects": [
+            {
+              "kind": "shield",
+              "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Steel" },
+              "amount": 0,
+              "scaleWithMaxHp": 0.3,
+              "durationMs": null
+            },
+            {
+              "kind": "statMod",
+              "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Steel" },
+              "stat": "hp",
+              "op": "mult",
+              "amount": 0.1,
+              "durationMs": null
+            }
+          ]
+        }
+      ],
+      "artKey": "synergy/steel"
+    }
+  ]
+}

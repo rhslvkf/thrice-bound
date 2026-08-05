@@ -26,6 +26,41 @@ and the loader/validator that turns them into typed objects.
 
 ## Conventions
 
-One file per content category. Balance changes are their own commits
-(`feat(data):` / `fix(data):`) so tuning history is readable separately from
-code history.
+One file per content category. Every file is a `{ "version": N, "<name>": [...] }`
+document, and all files must agree on `version` — the loader rejects a mismatch
+rather than loading a half-migrated content set.
+
+Optionality is expressed as an explicit `null`, never an omitted key, so a
+missing field is always an error rather than a silent default.
+
+Balance changes are their own commits (`feat(data):` / `fix(data):`) so tuning
+history stays readable separately from code history.
+
+## Contents
+
+- `schema.ts` — the types every JSON file must satisfy, plus board geometry and
+  merge constants.
+- `validate.ts` — validation primitives. Errors carry a field path, the reason,
+  and the value received; problems are batched so one load reports them all.
+- `loader.ts` — parses and cross-checks the files. Entry points are
+  `loadBundledGameData()` (cached) and `loadGameData(raw)`.
+- `units.json` — 28 units: 8 at tier 1, 12 at tier 2, 8 at tier 3.
+- `abilities.json`, `synergies.json`, `relics.json`, `encounters.json`.
+
+## The merge graph
+
+`UnitDef.mergesInto` is a list, not a single id, because choosing *which* way a
+merge resolves is the central decision of the game. The loader enforces the
+rules that keep that graph sane: merges climb exactly one tier, tier 3 is
+terminal, mergeable units offer at least two distinct targets, and the graph
+has no cycles.
+
+Run `npm run data:tree` to print the current tree.
+
+## Effects
+
+Abilities, synergies and relics all describe what they do with the same
+composable `Effect` objects — `damage`, `heal`, `shield`, `statMod`, `status`,
+`summon`, and `periodic` (which nests others to express regeneration and
+damage-over-time). Adding an ability should be a data edit; only a genuinely
+new *kind* of effect requires a change in `src/core`.

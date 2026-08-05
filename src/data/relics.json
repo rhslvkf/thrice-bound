@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "relics": [
+    {
+      "id": "relic.brass_coin",
+      "name": "Brass Coin",
+      "rarity": "common",
+      "description": "Earn 2 extra gold at the end of every round.",
+      "hooks": [
+        {
+          "on": "onRoundEnd",
+          "condition": { "kind": "always", "value": null, "tag": null },
+          "actions": [{ "kind": "grantGold", "amount": 2 }]
+        }
+      ],
+      "artKey": "relic/brass_coin"
+    },
+    {
+      "id": "relic.hunters_totem",
+      "name": "Hunter's Totem",
+      "rarity": "common",
+      "description": "With 3 or more Beasts deployed, Beast allies gain 10% attack.",
+      "hooks": [
+        {
+          "on": "onBattleStart",
+          "condition": { "kind": "tagCountAtLeast", "value": 3, "tag": "Beast" },
+          "actions": [
+            {
+              "kind": "applyEffect",
+              "effect": {
+                "kind": "statMod",
+                "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Beast" },
+                "stat": "atk",
+                "op": "mult",
+                "amount": 0.1,
+                "durationMs": null
+              }
+            }
+          ]
+        }
+      ],
+      "artKey": "relic/hunters_totem"
+    },
+    {
+      "id": "relic.merchants_ledger",
+      "name": "Merchant's Ledger",
+      "rarity": "rare",
+      "description": "When a round begins with 5 gold or less, gain 3 gold and a free reroll.",
+      "hooks": [
+        {
+          "on": "onRoundStart",
+          "condition": { "kind": "goldAtMost", "value": 5, "tag": null },
+          "actions": [
+            { "kind": "grantGold", "amount": 3 },
+            { "kind": "grantReroll", "amount": 1 }
+          ]
+        }
+      ],
+      "artKey": "relic/merchants_ledger"
+    },
+    {
+      "id": "relic.grave_offering",
+      "name": "Grave Offering",
+      "rarity": "rare",
+      "description": "Each ally that falls mends the survivors for 4% of their max HP.",
+      "hooks": [
+        {
+          "on": "onUnitDeath",
+          "condition": { "kind": "always", "value": null, "tag": null },
+          "actions": [
+            {
+              "kind": "applyEffect",
+              "effect": {
+                "kind": "heal",
+                "target": { "mode": "allAllies", "count": null, "radius": null, "tag": null },
+                "amount": 0,
+                "scaleWithMaxHp": 0.04
+              }
+            }
+          ]
+        }
+      ],
+      "artKey": "relic/grave_offering"
+    },
+    {
+      "id": "relic.iron_lodestone",
+      "name": "Iron Lodestone",
+      "rarity": "rare",
+      "description": "Steel units appear far more often in the shop.",
+      "hooks": [
+        {
+          "on": "onShopReroll",
+          "condition": { "kind": "always", "value": null, "tag": null },
+          "actions": [{ "kind": "shopOdds", "tag": "Steel", "weightMult": 1.75 }]
+        }
+      ],
+      "artKey": "relic/iron_lodestone"
+    },
+    {
+      "id": "relic.thrice_bound_seal",
+      "name": "Thrice-Bound Seal",
+      "rarity": "legendary",
+      "description": "From round 3 on, every merge pays out 2 gold and rouses a Grave Rat.",
+      "hooks": [
+        {
+          "on": "onMerge",
+          "condition": { "kind": "roundAtLeast", "value": 3, "tag": null },
+          "actions": [
+            { "kind": "grantGold", "amount": 2 },
+            { "kind": "grantUnit", "unitId": "unit.grave_rat", "count": 1 }
+          ]
+        }
+      ],
+      "artKey": "relic/thrice_bound_seal"
+    }
+  ]
+}

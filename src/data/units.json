@@ -1,0 +1,315 @@
+{
+  "version": 1,
+  "units": [
+    {
+      "id": "unit.thornling",
+      "name": "Thornling",
+      "tier": 1,
+      "tags": ["Beast"],
+      "cost": 1,
+      "stats": { "hp": 120, "atk": 14, "atkSpeed": 0.6, "range": 1, "moveSpeed": 1.0 },
+      "abilityId": "ability.thorn_burst",
+      "mergesInto": ["unit.bramble_stalker", "unit.moss_warden"],
+      "artKey": "unit/thornling"
+    },
+    {
+      "id": "unit.dire_pup",
+      "name": "Dire Pup",
+      "tier": 1,
+      "tags": ["Beast"],
+      "cost": 1,
+      "stats": { "hp": 90, "atk": 12, "atkSpeed": 0.95, "range": 1, "moveSpeed": 1.4 },
+      "abilityId": null,
+      "mergesInto": ["unit.moss_warden", "unit.alpha_howler"],
+      "artKey": "unit/dire_pup"
+    },
+    {
+      "id": "unit.bone_acolyte",
+      "name": "Bone Acolyte",
+      "tier": 1,
+      "tags": ["Undead"],
+      "cost": 2,
+      "stats": { "hp": 80, "atk": 16, "atkSpeed": 0.8, "range": 3, "moveSpeed": 0.9 },
+      "abilityId": "ability.raise_wisp",
+      "mergesInto": ["unit.rot_knight", "unit.crypt_weaver"],
+      "artKey": "unit/bone_acolyte"
+    },
+    {
+      "id": "unit.grave_rat",
+      "name": "Grave Rat",
+      "tier": 1,
+      "tags": ["Undead"],
+      "cost": 1,
+      "stats": { "hp": 70, "atk": 15, "atkSpeed": 0.95, "range": 1, "moveSpeed": 1.5 },
+      "abilityId": null,
+      "mergesInto": ["unit.crypt_weaver", "unit.plague_hound"],
+      "artKey": "unit/grave_rat"
+    },
+    {
+      "id": "unit.spark_imp",
+      "name": "Spark Imp",
+      "tier": 1,
+      "tags": ["Arcane"],
+      "cost": 2,
+      "stats": { "hp": 75, "atk": 18, "atkSpeed": 0.75, "range": 3, "moveSpeed": 1.1 },
+      "abilityId": "ability.spark_bolt",
+      "mergesInto": ["unit.ember_magus", "unit.sigil_adept"],
+      "artKey": "unit/spark_imp"
+    },
+    {
+      "id": "unit.rune_scribe",
+      "name": "Rune Scribe",
+      "tier": 1,
+      "tags": ["Arcane"],
+      "cost": 3,
+      "stats": { "hp": 95, "atk": 13, "atkSpeed": 0.8, "range": 4, "moveSpeed": 0.9 },
+      "abilityId": "ability.runic_ward",
+      "mergesInto": ["unit.sigil_adept", "unit.void_caller"],
+      "artKey": "unit/rune_scribe"
+    },
+    {
+      "id": "unit.scrap_sentry",
+      "name": "Scrap Sentry",
+      "tier": 1,
+      "tags": ["Steel"],
+      "cost": 2,
+      "stats": { "hp": 165, "atk": 10, "atkSpeed": 0.6, "range": 1, "moveSpeed": 0.8 },
+      "abilityId": null,
+      "mergesInto": ["unit.iron_bulwark", "unit.gear_artificer"],
+      "artKey": "unit/scrap_sentry"
+    },
+    {
+      "id": "unit.forge_apprentice",
+      "name": "Forge Apprentice",
+      "tier": 1,
+      "tags": ["Steel"],
+      "cost": 3,
+      "stats": { "hp": 110, "atk": 15, "atkSpeed": 0.62, "range": 1, "moveSpeed": 1.0 },
+      "abilityId": null,
+      "mergesInto": ["unit.gear_artificer", "unit.blade_dancer"],
+      "artKey": "unit/forge_apprentice"
+    },
+
+    {
+      "id": "unit.bramble_stalker",
+      "name": "Bramble Stalker",
+      "tier": 2,
+      "tags": ["Beast"],
+      "cost": 3,
+      "stats": { "hp": 190, "atk": 21, "atkSpeed": 0.55, "range": 1, "moveSpeed": 1.2 },
+      "abilityId": "ability.thorn_burst",
+      "mergesInto": ["unit.verdant_colossus", "unit.primal_avatar"],
+      "artKey": "unit/bramble_stalker"
+    },
+    {
+      "id": "unit.moss_warden",
+      "name": "Moss Warden",
+      "tier": 2,
+      "tags": ["Beast", "Undead"],
+      "cost": 3,
+      "stats": { "hp": 300, "atk": 15, "atkSpeed": 0.49, "range": 1, "moveSpeed": 0.9 },
+      "abilityId": "ability.rooted_growth",
+      "mergesInto": ["unit.verdant_colossus", "unit.bone_leviathan"],
+      "artKey": "unit/moss_warden"
+    },
+    {
+      "id": "unit.alpha_howler",
+      "name": "Alpha Howler",
+      "tier": 2,
+      "tags": ["Beast"],
+      "cost": 3,
+      "stats": { "hp": 165, "atk": 18, "atkSpeed": 0.74, "range": 1, "moveSpeed": 1.6 },
+      "abilityId": "ability.pack_howl",
+      "mergesInto": ["unit.verdant_colossus", "unit.primal_avatar"],
+      "artKey": "unit/alpha_howler"
+    },
+    {
+      "id": "unit.rot_knight",
+      "name": "Rot Knight",
+      "tier": 2,
+      "tags": ["Undead"],
+      "cost": 6,
+      "stats": { "hp": 250, "atk": 18, "atkSpeed": 0.49, "range": 1, "moveSpeed": 0.95 },
+      "abilityId": "ability.grave_pact",
+      "mergesInto": ["unit.lich_regent", "unit.bone_leviathan"],
+      "artKey": "unit/rot_knight"
+    },
+    {
+      "id": "unit.crypt_weaver",
+      "name": "Crypt Weaver",
+      "tier": 2,
+      "tags": ["Undead", "Arcane"],
+      "cost": 5,
+      "stats": { "hp": 150, "atk": 25, "atkSpeed": 0.59, "range": 3, "moveSpeed": 0.9 },
+      "abilityId": "ability.soul_siphon",
+      "mergesInto": ["unit.lich_regent", "unit.void_sovereign"],
+      "artKey": "unit/crypt_weaver"
+    },
+    {
+      "id": "unit.plague_hound",
+      "name": "Plague Hound",
+      "tier": 2,
+      "tags": ["Undead"],
+      "cost": 3,
+      "stats": { "hp": 140, "atk": 20, "atkSpeed": 0.79, "range": 1, "moveSpeed": 1.5 },
+      "abilityId": "ability.plague_bite",
+      "mergesInto": ["unit.lich_regent", "unit.bone_leviathan"],
+      "artKey": "unit/plague_hound"
+    },
+    {
+      "id": "unit.ember_magus",
+      "name": "Ember Magus",
+      "tier": 2,
+      "tags": ["Arcane"],
+      "cost": 6,
+      "stats": { "hp": 145, "atk": 26, "atkSpeed": 0.58, "range": 3, "moveSpeed": 1.0 },
+      "abilityId": "ability.ember_nova",
+      "mergesInto": ["unit.archon_of_ash", "unit.void_sovereign"],
+      "artKey": "unit/ember_magus"
+    },
+    {
+      "id": "unit.sigil_adept",
+      "name": "Sigil Adept",
+      "tier": 2,
+      "tags": ["Arcane", "Steel"],
+      "cost": 8,
+      "stats": { "hp": 200, "atk": 19, "atkSpeed": 0.58, "range": 4, "moveSpeed": 0.9 },
+      "abilityId": "ability.sigil_of_iron",
+      "mergesInto": ["unit.archon_of_ash", "unit.sovereign_engine"],
+      "artKey": "unit/sigil_adept"
+    },
+    {
+      "id": "unit.void_caller",
+      "name": "Void Caller",
+      "tier": 2,
+      "tags": ["Arcane"],
+      "cost": 9,
+      "stats": { "hp": 130, "atk": 28, "atkSpeed": 0.6, "range": 4, "moveSpeed": 0.85 },
+      "abilityId": "ability.void_rift",
+      "mergesInto": ["unit.archon_of_ash", "unit.void_sovereign"],
+      "artKey": "unit/void_caller"
+    },
+    {
+      "id": "unit.iron_bulwark",
+      "name": "Iron Bulwark",
+      "tier": 2,
+      "tags": ["Steel"],
+      "cost": 6,
+      "stats": { "hp": 360, "atk": 13, "atkSpeed": 0.47, "range": 1, "moveSpeed": 0.75 },
+      "abilityId": "ability.bulwark_stance",
+      "mergesInto": ["unit.titan_of_the_forge", "unit.sovereign_engine"],
+      "artKey": "unit/iron_bulwark"
+    },
+    {
+      "id": "unit.gear_artificer",
+      "name": "Gear Artificer",
+      "tier": 2,
+      "tags": ["Steel", "Beast"],
+      "cost": 8,
+      "stats": { "hp": 220, "atk": 20, "atkSpeed": 0.5, "range": 2, "moveSpeed": 1.0 },
+      "abilityId": "ability.overclock",
+      "mergesInto": ["unit.titan_of_the_forge", "unit.primal_avatar"],
+      "artKey": "unit/gear_artificer"
+    },
+    {
+      "id": "unit.blade_dancer",
+      "name": "Blade Dancer",
+      "tier": 2,
+      "tags": ["Steel"],
+      "cost": 9,
+      "stats": { "hp": 160, "atk": 19, "atkSpeed": 0.72, "range": 1, "moveSpeed": 1.35 },
+      "abilityId": "ability.whirling_blades",
+      "mergesInto": ["unit.titan_of_the_forge", "unit.sovereign_engine"],
+      "artKey": "unit/blade_dancer"
+    },
+
+    {
+      "id": "unit.verdant_colossus",
+      "name": "Verdant Colossus",
+      "tier": 3,
+      "tags": ["Beast"],
+      "cost": 9,
+      "stats": { "hp": 700, "atk": 25, "atkSpeed": 0.3, "range": 1, "moveSpeed": 0.7 },
+      "abilityId": "ability.rooted_growth",
+      "mergesInto": [],
+      "artKey": "unit/verdant_colossus"
+    },
+    {
+      "id": "unit.primal_avatar",
+      "name": "Primal Avatar",
+      "tier": 3,
+      "tags": ["Beast"],
+      "cost": 9,
+      "stats": { "hp": 340, "atk": 36, "atkSpeed": 0.43, "range": 1, "moveSpeed": 1.4 },
+      "abilityId": "ability.pack_howl",
+      "mergesInto": [],
+      "artKey": "unit/primal_avatar"
+    },
+    {
+      "id": "unit.lich_regent",
+      "name": "Lich Regent",
+      "tier": 3,
+      "tags": ["Undead", "Arcane"],
+      "cost": 15,
+      "stats": { "hp": 300, "atk": 42, "atkSpeed": 0.42, "range": 4, "moveSpeed": 0.85 },
+      "abilityId": "ability.deathless_reign",
+      "mergesInto": [],
+      "artKey": "unit/lich_regent"
+    },
+    {
+      "id": "unit.bone_leviathan",
+      "name": "Bone Leviathan",
+      "tier": 3,
+      "tags": ["Undead"],
+      "cost": 12,
+      "stats": { "hp": 560, "atk": 30, "atkSpeed": 0.32, "range": 1, "moveSpeed": 0.9 },
+      "abilityId": "ability.abyssal_collapse",
+      "mergesInto": [],
+      "artKey": "unit/bone_leviathan"
+    },
+    {
+      "id": "unit.archon_of_ash",
+      "name": "Archon of Ash",
+      "tier": 3,
+      "tags": ["Arcane"],
+      "cost": 18,
+      "stats": { "hp": 290, "atk": 45, "atkSpeed": 0.4, "range": 3, "moveSpeed": 1.0 },
+      "abilityId": "ability.ember_nova",
+      "mergesInto": [],
+      "artKey": "unit/archon_of_ash"
+    },
+    {
+      "id": "unit.void_sovereign",
+      "name": "Void Sovereign",
+      "tier": 3,
+      "tags": ["Arcane"],
+      "cost": 21,
+      "stats": { "hp": 270, "atk": 48, "atkSpeed": 0.41, "range": 5, "moveSpeed": 0.8 },
+      "abilityId": "ability.void_rift",
+      "mergesInto": [],
+      "artKey": "unit/void_sovereign"
+    },
+    {
+      "id": "unit.titan_of_the_forge",
+      "name": "Titan of the Forge",
+      "tier": 3,
+      "tags": ["Steel"],
+      "cost": 18,
+      "stats": { "hp": 800, "atk": 22, "atkSpeed": 0.3, "range": 1, "moveSpeed": 0.7 },
+      "abilityId": "ability.titan_slam",
+      "mergesInto": [],
+      "artKey": "unit/titan_of_the_forge"
+    },
+    {
+      "id": "unit.sovereign_engine",
+      "name": "Sovereign Engine",
+      "tier": 3,
+      "tags": ["Steel", "Arcane"],
+      "cost": 24,
+      "stats": { "hp": 430, "atk": 32, "atkSpeed": 0.38, "range": 2, "moveSpeed": 0.95 },
+      "abilityId": "ability.overclock",
+      "mergesInto": [],
+      "artKey": "unit/sovereign_engine"
+    }
+  ]
+}

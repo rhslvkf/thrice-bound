@@ -1,0 +1,374 @@
+{
+  "version": 1,
+  "abilities": [
+    {
+      "id": "ability.thorn_burst",
+      "name": "Thorn Burst",
+      "description": "Retaliates against attackers with a spray of thorns.",
+      "trigger": "onHit",
+      "intervalMs": null,
+      "cooldownMs": 800,
+      "chance": 1.0,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": { "mode": "eventSource", "count": null, "radius": null, "tag": null },
+          "amount": 6,
+          "damageType": "physical",
+          "scaleWithAtk": 0.2
+        }
+      ],
+      "artKey": "ability/thorn_burst"
+    },
+    {
+      "id": "ability.raise_wisp",
+      "name": "Raise Wisp",
+      "description": "On death, a scavenging rat claws its way out of the corpse.",
+      "trigger": "onDeath",
+      "intervalMs": null,
+      "cooldownMs": null,
+      "chance": 1.0,
+      "effects": [
+        {
+          "kind": "summon",
+          "target": { "mode": "self", "count": null, "radius": null, "tag": null },
+          "unitId": "unit.grave_rat",
+          "count": 1
+        }
+      ],
+      "artKey": "ability/raise_wisp"
+    },
+    {
+      "id": "ability.spark_bolt",
+      "name": "Spark Bolt",
+      "description": "Attacks sometimes arc into a burst of raw magic.",
+      "trigger": "onAttack",
+      "intervalMs": null,
+      "cooldownMs": null,
+      "chance": 0.35,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": { "mode": "attackTarget", "count": null, "radius": null, "tag": null },
+          "amount": 10,
+          "damageType": "magical",
+          "scaleWithAtk": 0.5
+        }
+      ],
+      "artKey": "ability/spark_bolt"
+    },
+    {
+      "id": "ability.runic_ward",
+      "name": "Runic Ward",
+      "description": "Inscribes a protective ward on nearby allies at the start of combat.",
+      "trigger": "onSpawn",
+      "intervalMs": null,
+      "cooldownMs": null,
+      "chance": 1.0,
+      "effects": [
+        {
+          "kind": "shield",
+          "target": { "mode": "alliesInRadius", "count": null, "radius": 2, "tag": null },
+          "amount": 25,
+          "scaleWithMaxHp": 0.05,
+          "durationMs": null
+        }
+      ],
+      "artKey": "ability/runic_ward"
+    },
+    {
+      "id": "ability.rooted_growth",
+      "name": "Rooted Growth",
+      "description": "Draws life from the soil, mending itself and nearby allies.",
+      "trigger": "interval",
+      "intervalMs": 3000,
+      "cooldownMs": null,
+      "chance": 1.0,
+      "effects": [
+        {
+          "kind": "heal",
+          "target": { "mode": "alliesInRadius", "count": null, "radius": 2, "tag": null },
+          "amount": 12,
+          "scaleWithMaxHp": 0.03
+        }
+      ],
+      "artKey": "ability/rooted_growth"
+    },
+    {
+      "id": "ability.pack_howl",
+      "name": "Pack Howl",
+      "description": "A howl that drives every beast on the field into a frenzy.",
+      "trigger": "onSpawn",
+      "intervalMs": null,
+      "cooldownMs": null,
+      "chance": 1.0,
+      "effects": [
+        {
+          "kind": "statMod",
+          "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Beast" },
+          "stat": "atkSpeed",
+          "op": "mult",
+          "amount": 0.12,
+          "durationMs": null
+        }
+      ],
+      "artKey": "ability/pack_howl"
+    },
+    {
+      "id": "ability.grave_pact",
+      "name": "Grave Pact",
+      "description": "Grows stronger with every ally that falls.",
+      "trigger": "onAllyDeath",
+      "intervalMs": null,
+      "cooldownMs": null,
+      "chance": 1.0,
+      "effects": [
+        {
+          "kind": "statMod",
+          "target": { "mode": "self", "count": null, "radius": null, "tag": null },
+          "stat": "atk",
+          "op": "add",
+          "amount": 4,
+          "durationMs": null
+        }
+      ],
+      "artKey": "ability/grave_pact"
+    },
+    {
+      "id": "ability.soul_siphon",
+      "name": "Soul Siphon",
+      "description": "Tears loose a fragment of the target's soul and swallows it.",
+      "trigger": "onAttack",
+      "intervalMs": null,
+      "cooldownMs": null,
+      "chance": 0.4,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": { "mode": "attackTarget", "count": null, "radius": null, "tag": null },
+          "amount": 8,
+          "damageType": "magical",
+          "scaleWithAtk": 0.35
+        },
+        {
+          "kind": "heal",
+          "target": { "mode": "self", "count": null, "radius": null, "tag": null },
+          "amount": 10,
+          "scaleWithMaxHp": null
+        }
+      ],
+      "artKey": "ability/soul_siphon"
+    },
+    {
+      "id": "ability.plague_bite",
+      "name": "Plague Bite",
+      "description": "Every bite leaves a festering wound.",
+      "trigger": "onAttack",
+      "intervalMs": null,
+      "cooldownMs": null,
+      "chance": 1.0,
+      "effects": [
+        {
+          "kind": "status",
+          "target": { "mode": "attackTarget", "count": null, "radius": null, "tag": null },
+          "status": "poison",
+          "durationMs": 4000,
+          "magnitude": 5
+        }
+      ],
+      "artKey": "ability/plague_bite"
+    },
+    {
+      "id": "ability.ember_nova",
+      "name": "Ember Nova",
+      "description": "Detonates a ring of embers that clings to everything it touches.",
+      "trigger": "interval",
+      "intervalMs": 4000,
+      "cooldownMs": null,
+      "chance": 1.0,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": { "mode": "enemiesInRadius", "count": null, "radius": 2, "tag": null },
+          "amount": 20,
+          "damageType": "magical",
+          "scaleWithAtk": 0.6
+        },
+        {
+          "kind": "status",
+          "target": { "mode": "enemiesInRadius", "count": null, "radius": 2, "tag": null },
+          "status": "burn",
+          "durationMs": 3000,
+          "magnitude": 6
+        }
+      ],
+      "artKey": "ability/ember_nova"
+    },
+    {
+      "id": "ability.sigil_of_iron",
+      "name": "Sigil of Iron",
+      "description": "Etches reinforcing sigils into every steel frame on the field.",
+      "trigger": "onSpawn",
+      "intervalMs": null,
+      "cooldownMs": null,
+      "chance": 1.0,
+      "effects": [
+        {
+          "kind": "statMod",
+          "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Steel" },
+          "stat": "hp",
+          "op": "mult",
+          "amount": 0.15,
+          "durationMs": null
+        }
+      ],
+      "artKey": "ability/sigil_of_iron"
+    },
+    {
+      "id": "ability.void_rift",
+      "name": "Void Rift",
+      "description": "Opens rifts beneath distant enemies without warning.",
+      "trigger": "onAttack",
+      "intervalMs": null,
+      "cooldownMs": 1500,
+      "chance": 0.3,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": { "mode": "randomEnemy", "count": 2, "radius": null, "tag": null },
+          "amount": 18,
+          "damageType": "pure",
+          "scaleWithAtk": 0.4
+        }
+      ],
+      "artKey": "ability/void_rift"
+    },
+    {
+      "id": "ability.bulwark_stance",
+      "name": "Bulwark Stance",
+      "description": "Braces behind a slab of plating for the whole battle.",
+      "trigger": "onSpawn",
+      "intervalMs": null,
+      "cooldownMs": null,
+      "chance": 1.0,
+      "effects": [
+        {
+          "kind": "shield",
+          "target": { "mode": "self", "count": null, "radius": null, "tag": null },
+          "amount": 0,
+          "scaleWithMaxHp": 0.3,
+          "durationMs": null
+        }
+      ],
+      "artKey": "ability/bulwark_stance"
+    },
+    {
+      "id": "ability.overclock",
+      "name": "Overclock",
+      "description": "Winds itself tighter as the fight drags on.",
+      "trigger": "interval",
+      "intervalMs": 5000,
+      "cooldownMs": null,
+      "chance": 1.0,
+      "effects": [
+        {
+          "kind": "statMod",
+          "target": { "mode": "self", "count": null, "radius": null, "tag": null },
+          "stat": "atkSpeed",
+          "op": "mult",
+          "amount": 0.1,
+          "durationMs": null
+        }
+      ],
+      "artKey": "ability/overclock"
+    },
+    {
+      "id": "ability.whirling_blades",
+      "name": "Whirling Blades",
+      "description": "Sweeps every adjacent enemy mid-swing.",
+      "trigger": "onAttack",
+      "intervalMs": null,
+      "cooldownMs": null,
+      "chance": 0.25,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": { "mode": "enemiesInRadius", "count": null, "radius": 1, "tag": null },
+          "amount": 12,
+          "damageType": "physical",
+          "scaleWithAtk": 0.45
+        }
+      ],
+      "artKey": "ability/whirling_blades"
+    },
+    {
+      "id": "ability.titan_slam",
+      "name": "Titan Slam",
+      "description": "A hammer blow heavy enough to stop a target mid-step.",
+      "trigger": "onAttack",
+      "intervalMs": null,
+      "cooldownMs": 2000,
+      "chance": 0.2,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": { "mode": "attackTarget", "count": null, "radius": null, "tag": null },
+          "amount": 30,
+          "damageType": "physical",
+          "scaleWithAtk": 0.8
+        },
+        {
+          "kind": "status",
+          "target": { "mode": "attackTarget", "count": null, "radius": null, "tag": null },
+          "status": "stun",
+          "durationMs": 900,
+          "magnitude": 0
+        }
+      ],
+      "artKey": "ability/titan_slam"
+    },
+    {
+      "id": "ability.deathless_reign",
+      "name": "Deathless Reign",
+      "description": "Refuses to let the dead stay dead, and mends the living meanwhile.",
+      "trigger": "onAllyDeath",
+      "intervalMs": null,
+      "cooldownMs": 3000,
+      "chance": 0.5,
+      "effects": [
+        {
+          "kind": "summon",
+          "target": { "mode": "self", "count": null, "radius": null, "tag": null },
+          "unitId": "unit.grave_rat",
+          "count": 2
+        },
+        {
+          "kind": "heal",
+          "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Undead" },
+          "amount": 0,
+          "scaleWithMaxHp": 0.08
+        }
+      ],
+      "artKey": "ability/deathless_reign"
+    },
+    {
+      "id": "ability.abyssal_collapse",
+      "name": "Abyssal Collapse",
+      "description": "Its death drags everything nearby into the pit with it.",
+      "trigger": "onDeath",
+      "intervalMs": null,
+      "cooldownMs": null,
+      "chance": 1.0,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": { "mode": "enemiesInRadius", "count": null, "radius": 2, "tag": null },
+          "amount": 60,
+          "damageType": "pure",
+          "scaleWithAtk": 0.5
+        }
+      ],
+      "artKey": "ability/abyssal_collapse"
+    }
+  ]
+}
