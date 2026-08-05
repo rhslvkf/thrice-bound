@@ -26,7 +26,7 @@ import {
   tryTrigger,
 } from './abilities';
 import type { BattleContext } from './context';
-import { createContext, emit, livingOf, toState } from './context';
+import { countLivingOf, createContext, emit, livingOf, toState } from './context';
 import { applyDamageOverTime, performAttack } from './damage';
 import { tickPeriodics } from './effects';
 import type { BattleEvent } from './events';
@@ -39,8 +39,8 @@ import {
   isStunned,
   totalShield,
 } from './stats';
-import { acquireTarget, turnOrder } from './targeting';
-import type { BattleOutcome, BattleState, EndReason, Team } from './types';
+import { acquireTarget } from './targeting';
+import type { BattleOutcome, BattleState, BattleUnit, EndReason, Team } from './types';
 import { TEAMS } from './types';
 
 /** The product of one tick: the next state, and what happened getting there. */
@@ -55,10 +55,8 @@ export interface TickResult {
 }
 
 /** One unit's turn: attack if the target is in reach, otherwise close in. */
-function takeTurn(ctx: BattleContext, unitId: number): void {
-  const unit = ctx.units.find((candidate) => candidate.instanceId === unitId);
-  if (unit === undefined || !unit.alive) return;
-  if (isStunned(unit)) return;
+function takeTurn(ctx: BattleContext, unit: BattleUnit): void {
+  if (!unit.alive || isStunned(unit)) return;
 
   const target = acquireTarget(ctx, unit);
   if (target === null) return;
@@ -117,8 +115,8 @@ function survivingFraction(ctx: BattleContext, team: Team): number {
 export function resolveEnd(
   ctx: BattleContext,
 ): { outcome: BattleOutcome; reason: EndReason } | null {
-  const playerAlive = livingOf(ctx, 'player').length;
-  const enemyAlive = livingOf(ctx, 'enemy').length;
+  const playerAlive = countLivingOf(ctx, 'player');
+  const enemyAlive = countLivingOf(ctx, 'enemy');
 
   if (playerAlive === 0 && enemyAlive === 0) {
     return { outcome: 'draw', reason: 'mutualWipe' };
@@ -150,16 +148,26 @@ export function stepBattle(data: GameData, state: BattleState): TickResult {
   const elapsedMs = BATTLE.tickMs;
 
   ageTimers(ctx, elapsedMs);
-  for (const unit of turnOrder(ctx)) applyDamageOverTime(ctx, unit, elapsedMs);
+
+  // Loops are bounded by the unit count captured before they start, so a unit
+  // summoned part-way through waits for the next tick. Units are never removed
+  // from the list, only marked dead, so indices stay valid throughout.
+  const beforeDot = ctx.units.length;
+  for (let i = 0; i < beforeDot; i += 1) {
+    const unit = ctx.units[i];
+    if (unit !== undefined && unit.alive) applyDamageOverTime(ctx, unit, elapsedMs);
+  }
   drainTriggers(ctx);
 
   tickPeriodics(ctx, elapsedMs);
   tickIntervalAbilities(ctx, elapsedMs);
   drainTriggers(ctx);
 
-  // Ids are captured up front so a unit summoned mid-tick waits for the next
-  // one, and so a unit that dies mid-tick is simply skipped.
-  for (const unit of turnOrder(ctx)) takeTurn(ctx, unit.instanceId);
+  const beforeTurns = ctx.units.length;
+  for (let i = 0; i < beforeTurns; i += 1) {
+    const unit = ctx.units[i];
+    if (unit !== undefined) takeTurn(ctx, unit);
+  }
   drainTriggers(ctx);
 
   const ending = resolveEnd(ctx);
@@ -168,8 +176,8 @@ export function stepBattle(data: GameData, state: BattleState): TickResult {
       kind: 'battleEnd',
       outcome: ending.outcome,
       reason: ending.reason,
-      playerAlive: livingOf(ctx, 'player').length,
-      enemyAlive: livingOf(ctx, 'enemy').length,
+      playerAlive: countLivingOf(ctx, 'player'),
+      enemyAlive: countLivingOf(ctx, 'enemy'),
     });
   }
 

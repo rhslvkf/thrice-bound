@@ -108,6 +108,33 @@ describe('determinism', () => {
     expect(JSON.stringify(revived)).toBe(JSON.stringify(direct));
   });
 
+  it('matches a recorded golden signature', () => {
+    // The checks above compare runs against each other, so they would still
+    // pass if an "optimisation" changed every outcome consistently. This pins
+    // the outcomes themselves: if it fails, battle results moved, and updating
+    // it is a deliberate act that invalidates stored replays and balance
+    // baselines.
+    const parts: string[] = [];
+    for (const setup of [MIXED, duel('unit.rot_knight', 'unit.plague_hound')]) {
+      const result = runBattle(data, setup);
+      parts.push(
+        [
+          result.outcome,
+          result.reason,
+          result.ticks,
+          result.events.length,
+          result.finalState.units
+            .map((u) => `${u.instanceId}/${u.alive ? 1 : 0}/${u.col},${u.row}/${Math.round(u.hp * 1e6)}`)
+            .join(';'),
+        ].join(':'),
+      );
+    }
+    expect(parts).toEqual([
+      'player:wipe:190:102:0/0/1,1/0;1/1/2,3/75000000;2/1/3,1/60000000;3/0/1,1/0;4/0/2,0/0;5/0/3,1/0;6/0/2,0/0',
+      'enemy:wipe:174:485:0/0/2,2/0;1/1/3,1/50000000',
+    ]);
+  });
+
   it('reads no clock and calls no host random source', () => {
     // A battle run with Math.random and Date.now replaced by throwing stubs
     // must still complete: core may touch neither.

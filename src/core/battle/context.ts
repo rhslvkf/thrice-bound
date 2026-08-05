@@ -53,8 +53,18 @@ export function emit(ctx: BattleContext, event: WithoutTick<BattleEvent>): void 
   ctx.events.push({ ...event, tick: ctx.tick } as BattleEvent);
 }
 
+/**
+ * Looks a unit up by id.
+ *
+ * Instance ids are handed out in push order and units are never removed from
+ * the list — a dead unit stays put with `alive: false` — so `units[id]` is the
+ * unit with that id. The identity check keeps this correct even if that
+ * invariant is ever broken, at which point it falls back to a scan.
+ */
 export function unitById(ctx: BattleContext, id: number | null): BattleUnit | null {
   if (id === null) return null;
+  const direct = ctx.units[id];
+  if (direct !== undefined && direct.instanceId === id) return direct;
   return ctx.units.find((unit) => unit.instanceId === id) ?? null;
 }
 
@@ -70,6 +80,15 @@ export function living(ctx: BattleContext): BattleUnit[] {
 
 export function livingOf(ctx: BattleContext, team: Team): BattleUnit[] {
   return ctx.units.filter((unit) => unit.alive && unit.team === team);
+}
+
+/** Counts survivors without allocating. Called every tick by the end check. */
+export function countLivingOf(ctx: BattleContext, team: Team): number {
+  let count = 0;
+  for (const unit of ctx.units) {
+    if (unit.alive && unit.team === team) count += 1;
+  }
+  return count;
 }
 
 function cloneMod(mod: ActiveMod): ActiveMod {

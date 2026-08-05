@@ -139,7 +139,13 @@ export function resolveTargets(
   }
 }
 
-/** Every living unit, ordered by instance id. The canonical turn order. */
+/**
+ * Every living unit, ordered by instance id. The canonical turn order.
+ *
+ * No sort: ids are handed out in push order and units are never removed, so
+ * `ctx.units` is already ascending. The hot loops in `tick.ts` iterate the
+ * list directly rather than calling this, to avoid the array entirely.
+ */
 export function turnOrder(ctx: BattleContext): BattleUnit[] {
-  return living(ctx).sort((a, b) => a.instanceId - b.instanceId);
+  return living(ctx);
 }

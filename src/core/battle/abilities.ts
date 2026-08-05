@@ -15,7 +15,6 @@ import type { AbilityDef, AbilityTrigger } from '../../data/schema';
 import type { BattleContext } from './context';
 import { unitById } from './context';
 import { applyEffects } from './effects';
-import { turnOrder } from './targeting';
 import type { BattleUnit, EffectContext } from './types';
 
 function abilityOf(ctx: BattleContext, unit: BattleUnit): AbilityDef | null {
@@ -83,7 +82,10 @@ function selfContext(unit: BattleUnit): EffectContext {
  * 3000ms interval fires every 60 ticks exactly rather than drifting.
  */
 export function tickIntervalAbilities(ctx: BattleContext, elapsedMs: number): void {
-  for (const unit of turnOrder(ctx)) {
+  const before = ctx.units.length;
+  for (let i = 0; i < before; i += 1) {
+    const unit = ctx.units[i];
+    if (unit === undefined || !unit.alive) continue;
     const ability = abilityOf(ctx, unit);
     if (ability === null || ability.trigger !== 'interval') continue;
     if (ability.intervalMs === null) continue;

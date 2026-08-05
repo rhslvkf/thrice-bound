@@ -1,0 +1,9 @@
+synergy_id,tag,threshold,active_teams,active_win_rate,inactive_teams,inactive_win_rate,delta_pp
+synergy.arcane,Arcane,3,1938,0.7224,18062,0.4754,24.70
+synergy.arcane,Arcane,5,0,0.0000,18062,0.4754,-47.54
+synergy.beast,Beast,3,966,0.4731,19034,0.5006,-2.75
+synergy.beast,Beast,5,0,0.0000,19034,0.5006,-50.06
+synergy.steel,Steel,3,944,0.4142,19056,0.5035,-8.93
+synergy.steel,Steel,5,0,0.0000,19056,0.5035,-50.35
+synergy.undead,Undead,3,959,0.5600,19041,0.4962,6.37
+synergy.undead,Undead,5,0,0.0000,19041,0.4962,-49.62

@@ -1,0 +1,29 @@
+unit_id,name,tier,tags,presence,win_rate,instances,death_rate,avg_survival_ticks,avg_damage_dealt,avg_damage_taken,vs_tier_mean_pp
+unit.archon_of_ash,Archon of Ash,3,Arcane,2614,0.7686,2766,0.3680,260.8,530.2,158.7,12.96
+unit.lich_regent,Lich Regent,3,Undead|Arcane,2741,0.7196,2901,0.4374,311.8,273.4,179.6,8.07
+unit.verdant_colossus,Verdant Colossus,3,Beast,2653,0.6964,2797,0.3357,550.9,183.8,611.4,5.74
+unit.void_sovereign,Void Sovereign,3,Arcane,2657,0.6449,2824,0.5025,276.5,395.7,171.5,0.60
+unit.titan_of_the_forge,Titan of the Forge,3,Steel,2790,0.6330,2941,0.4386,511.0,201.4,569.1,-0.60
+unit.bone_leviathan,Bone Leviathan,3,Undead,2742,0.6180,2882,0.5566,435.5,284.6,446.4,-2.10
+unit.ember_magus,Ember Magus,2,Arcane,2747,0.5976,2913,0.5620,227.8,371.2,97.0,12.92
+unit.sovereign_engine,Sovereign Engine,3,Steel|Arcane,2658,0.5959,2819,0.5303,382.1,273.6,299.0,-4.30
+unit.primal_avatar,Primal Avatar,3,Beast,2782,0.5597,2930,0.6266,319.6,220.5,269.2,-7.93
+unit.void_caller,Void Caller,2,Arcane,2797,0.5400,2955,0.6135,232.5,307.2,92.8,7.17
+unit.moss_warden,Moss Warden,2,Beast|Undead,2614,0.5331,2767,0.6332,374.4,111.8,305.4,6.47
+unit.crypt_weaver,Crypt Weaver,2,Undead|Arcane,2671,0.5009,2829,0.6684,254.6,236.3,124.1,3.26
+unit.sigil_adept,Sigil Adept,2,Arcane|Steel,2655,0.4748,2804,0.6922,317.4,173.7,182.4,0.64
+unit.iron_bulwark,Iron Bulwark,2,Steel,2639,0.4712,2798,0.6898,395.9,98.4,301.8,0.28
+unit.gear_artificer,Gear Artificer,2,Steel|Beast,2740,0.4655,2896,0.6975,313.8,184.0,176.9,-0.28
+unit.plague_hound,Plague Hound,2,Undead,2597,0.4603,2750,0.7636,220.4,200.7,121.5,-0.80
+unit.spark_imp,Spark Imp,1,Arcane,2750,0.4560,2881,0.7188,209.0,190.3,58.7,10.63
+unit.rune_scribe,Rune Scribe,1,Arcane,2766,0.4523,2912,0.7277,275.8,144.2,76.3,10.26
+unit.bone_acolyte,Bone Acolyte,1,Undead,2639,0.4521,2779,0.7672,229.7,144.4,67.9,10.24
+unit.bramble_stalker,Bramble Stalker,2,Beast,2731,0.4317,2881,0.7768,258.8,145.9,166.0,-3.66
+unit.rot_knight,Rot Knight,2,Undead,2715,0.4300,2872,0.7566,298.0,120.4,220.6,-3.83
+unit.blade_dancer,Blade Dancer,2,Steel,2662,0.4237,2800,0.7900,236.7,162.7,142.9,-4.46
+unit.alpha_howler,Alpha Howler,2,Beast,2660,0.4212,2818,0.8013,231.7,125.0,146.5,-4.71
+unit.thornling,Thornling,1,Beast,2744,0.3613,2883,0.8477,218.4,85.0,110.3,1.16
+unit.scrap_sentry,Scrap Sentry,1,Steel,2797,0.3380,2957,0.8600,248.5,54.1,155.9,-1.16
+unit.dire_pup,Dire Pup,1,Beast,2752,0.3379,2920,0.8654,189.2,72.4,83.9,-1.18
+unit.grave_rat,Grave Rat,1,Undead,2687,0.3314,2830,0.8855,178.2,76.8,66.0,-1.83
+unit.forge_apprentice,Forge Apprentice,1,Steel,2739,0.3249,2895,0.8732,213.3,70.3,104.8,-2.48

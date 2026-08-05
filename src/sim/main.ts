@@ -1,150 +1,212 @@
 /**
- * Headless balance simulator.
+ * Balance simulator entry point.
  *
- * Runs battles under plain Node using exactly the code the browser runs — no
- * renderer, no mocks, no parallel implementation. That is only possible
- * because `src/core` is pure and takes an injected seeded RNG.
+ *   npm run sim -- --matches 10000 --seed 42
  *
- * Usage:
- *   npm run sim                 one battle on the default seed, in detail
- *   npm run sim -- 42           one battle on seed 42
- *   npm run sim -- 42 200       200 battles from seed 42, as a win-rate sweep
+ * Runs the same battle code the browser runs, in parallel across worker
+ * threads, and writes a markdown report plus CSVs to `tools/reports/`.
+ *
+ * Only this file touches the filesystem or the console; the analysis in
+ * `metrics.ts` and `report.ts` is pure and tested directly.
  */
 
-import { runBattle } from '../core/battle/index';
-import type { BattleEvent, BattleSetup, Deployment } from '../core/battle/index';
-import { BATTLE } from '../core/config';
-import { createRng } from '../core/rng';
-import type { Rng } from '../core/rng';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
 import { loadBundledGameData } from '../data/loader';
-import { BOARD } from '../data/schema';
-import type { GameData } from '../data/schema';
+import { parseArgs, USAGE } from './cli';
+import type { SimOptions } from './cli';
+import { SIM_DEFAULTS } from './config';
+import { battlesIn, planJobs } from './jobs';
+import { runJobsInPool } from './pool';
+import {
+  buildSnapshot,
+  collectWarnings,
+  durationsCsv,
+  findRegressions,
+  mergePathsCsv,
+  missingMergeStudies,
+  renderMarkdown,
+  synergiesCsv,
+  unitsCsv,
+} from './report';
+import type { Snapshot } from './report';
 
-const DEFAULT_SEED = 1;
-const DEFAULT_BATTLES = 1;
-/** Units per side in a generated matchup. */
-const TEAM_SIZE = 4;
-/**
- * Offsets the team-generation stream away from the battle's own seed, so
- * changing how teams are picked never shifts combat rolls.
- */
-const TEAM_SEED_OFFSET = 0x5f37_59df;
+const SNAPSHOT_FILE = 'latest.json';
+const REPORT_FILE = 'balance-report.md';
 
-/** Builds a reproducible team from the roster, filling the team's home rows. */
-function randomTeam(data: GameData, rng: Rng, rows: readonly number[]): Deployment[] {
-  const ids = [...data.units.keys()].sort();
-  const deployments: Deployment[] = [];
-  for (let i = 0; i < TEAM_SIZE; i += 1) {
-    deployments.push({
-      unitId: rng.pick(ids),
-      col: Math.floor(i / rows.length) % BOARD.cols,
-      row: rows[i % rows.length] ?? 0,
-    });
+/** Loads the previous snapshot, treating anything unreadable as "no baseline". */
+async function readBaseline(path: string): Promise<Snapshot | null> {
+  try {
+    const raw = await readFile(path, 'utf8');
+    const parsed: unknown = JSON.parse(raw);
+    if (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      'version' in parsed &&
+      (parsed as { version: unknown }).version === 1
+    ) {
+      return parsed as Snapshot;
+    }
+    console.warn(`  baseline at ${path} has an unknown format; skipping comparison`);
+    return null;
+  } catch {
+    // Absent on the first run, which is not an error.
+    return null;
   }
-  return deployments;
 }
 
-/** A reproducible matchup for a seed. */
-function generateSetup(data: GameData, seed: number): BattleSetup {
-  const rng = createRng(seed ^ TEAM_SEED_OFFSET);
-  return {
-    seed,
-    player: randomTeam(data, rng, BOARD.playerRows),
-    enemy: randomTeam(data, rng, BOARD.enemyRows),
-  };
+function progressBar(done: number, total: number): string {
+  const width = 28;
+  const filled = total === 0 ? width : Math.round((done / total) * width);
+  return `[${'#'.repeat(filled)}${'.'.repeat(Math.max(0, width - filled))}]`;
 }
 
-function nameOf(data: GameData, unitId: string): string {
-  return data.units.get(unitId)?.name ?? unitId;
-}
-
-function describeTeam(data: GameData, deployments: readonly Deployment[]): string {
-  return deployments.map((d) => nameOf(data, d.unitId)).join(', ');
-}
-
-function countEvents(events: readonly BattleEvent[]): [string, number][] {
-  const counts = new Map<string, number>();
-  for (const event of events) {
-    counts.set(event.kind, (counts.get(event.kind) ?? 0) + 1);
-  }
-  return [...counts].sort((a, b) => b[1] - a[1]);
-}
-
-/** Runs one battle and prints it in detail. */
-function runSingle(data: GameData, setup: BattleSetup): void {
-  const result = runBattle(data, setup);
-  const seconds = ((result.ticks * BATTLE.tickMs) / BATTLE.msPerSecond).toFixed(1);
-
-  console.log(`  seed        ${setup.seed}`);
-  console.log(`  player      ${describeTeam(data, setup.player)}`);
-  console.log(`  enemy       ${describeTeam(data, setup.enemy)}`);
-  console.log('');
-  console.log(`  outcome     ${result.outcome} (${result.reason})`);
-  console.log(`  duration    ${result.ticks} ticks / ${seconds}s`);
-  console.log(`  events      ${result.events.length}`);
-  console.log(
-    `              ${countEvents(result.events)
-      .map(([kind, n]) => `${kind}=${n}`)
-      .join('  ')}`,
-  );
-
-  const survivors = result.finalState.units.filter((unit) => unit.alive);
-  const summary =
-    survivors.length === 0
-      ? 'none'
-      : survivors
-          .map(
-            (unit) =>
-              `${nameOf(data, unit.defId)} [${unit.team} ${Math.round(unit.hp)}/${Math.round(unit.maxHp)}]`,
-          )
-          .join(', ');
-  console.log(`  survivors   ${summary}`);
-}
-
-/** Runs many battles on consecutive seeds and prints aggregate rates. */
-function runSweep(data: GameData, baseSeed: number, battles: number): void {
-  const tally = { player: 0, enemy: 0, draw: 0 };
-  const reasons = new Map<string, number>();
-  let totalTicks = 0;
-  let totalEvents = 0;
-
-  for (let i = 0; i < battles; i += 1) {
-    const seed = baseSeed + i;
-    const result = runBattle(data, generateSetup(data, seed));
-    tally[result.outcome] += 1;
-    reasons.set(result.reason, (reasons.get(result.reason) ?? 0) + 1);
-    totalTicks += result.ticks;
-    totalEvents += result.events.length;
-  }
-
-  const pct = (n: number): string => `${((n / battles) * 100).toFixed(1)}%`;
-  console.log(`  battles     ${battles} (seeds ${baseSeed}..${baseSeed + battles - 1})`);
-  console.log(
-    `  outcomes    player ${pct(tally.player)}   enemy ${pct(tally.enemy)}   draw ${pct(tally.draw)}`,
-  );
-  console.log(
-    `  endings     ${[...reasons].map(([kind, n]) => `${kind} ${pct(n)}`).join('   ')}`,
-  );
-  console.log(`  avg ticks   ${(totalTicks / battles).toFixed(0)}`);
-  console.log(`  avg events  ${(totalEvents / battles).toFixed(0)}`);
-}
-
-function main(argv: readonly string[]): void {
+async function run(options: SimOptions): Promise<number> {
   const data = loadBundledGameData();
-  const seed = Number.parseInt(argv[0] ?? '', 10);
-  const battles = Number.parseInt(argv[1] ?? '', 10);
-  const resolvedSeed = Number.isFinite(seed) ? seed : DEFAULT_SEED;
-  const resolvedBattles = Number.isFinite(battles) ? battles : DEFAULT_BATTLES;
+  const jobs = planJobs(data, {
+    matches: options.matches,
+    seed: options.seed,
+    teamSize: options.teamSize,
+    mergeSamples: options.mergeSamples,
+    chunkSize: SIM_DEFAULTS.chunkSize,
+  });
+  const totalBattles = jobs.reduce((sum, job) => sum + battlesIn(data, job), 0);
 
-  console.log('THRICEBOUND balance simulator');
-  console.log(
-    `  content     ${data.units.size} units, ${data.abilities.size} abilities, ${data.synergies.size} synergies`,
-  );
-  console.log(`  tick        ${BATTLE.tickMs}ms`);
-  console.log('');
+  if (!options.quiet) {
+    console.log('THRICEBOUND balance simulator');
+    console.log(
+      `  content     ${data.units.size} units, ${data.abilities.size} abilities, ${data.synergies.size} synergies`,
+    );
+    console.log(
+      `  plan        ${options.matches.toLocaleString('en-US')} random matches + ` +
+        `${options.mergeSamples} merge samples/option = ` +
+        `${totalBattles.toLocaleString('en-US')} battles`,
+    );
+    console.log(`  workers     ${options.workers}  (${jobs.length} jobs)`);
+    console.log('');
+  }
 
-  if (resolvedBattles > 1) runSweep(data, resolvedSeed, resolvedBattles);
-  else runSingle(data, generateSetup(data, resolvedSeed));
+  const startedAt = Date.now();
+  let lastPrint = 0;
+  const aggregate = await runJobsInPool(data, jobs, {
+    workers: options.workers,
+    onProgress: (done, total) => {
+      if (options.quiet) return;
+      const now = Date.now();
+      if (done < total && now - lastPrint < 250) return;
+      lastPrint = now;
+      process.stdout.write(
+        `\r  ${progressBar(done, total)} ${done.toLocaleString('en-US')}/${total.toLocaleString('en-US')}`,
+      );
+    },
+  });
+  const elapsedMs = Date.now() - startedAt;
+  if (!options.quiet) {
+    process.stdout.write('\n\n');
+  }
+
+  const runInfo = {
+    matches: options.matches,
+    seed: options.seed,
+    workers: options.workers,
+    teamSize: options.teamSize,
+    mergeSamples: options.mergeSamples,
+    battles: totalBattles,
+    elapsedMs,
+    generatedAt: new Date(startedAt).toISOString(),
+  };
+
+  const outDir = resolve(options.outDir);
+  const baselinePath = options.baseline ?? join(outDir, SNAPSHOT_FILE);
+  // Read before writing, or the new run would compare against itself.
+  const baseline = await readBaseline(baselinePath);
+
+  const warnings = collectWarnings(data, aggregate, runInfo);
+  const regressions = findRegressions(aggregate, baseline);
+  const skipped = missingMergeStudies(data, aggregate);
+
+  if (options.writeReport) {
+    await mkdir(outDir, { recursive: true });
+    await Promise.all([
+      writeFile(
+        join(outDir, REPORT_FILE),
+        renderMarkdown(data, aggregate, runInfo, warnings, regressions, baseline),
+        'utf8',
+      ),
+      writeFile(join(outDir, 'units.csv'), unitsCsv(data, aggregate), 'utf8'),
+      writeFile(join(outDir, 'synergies.csv'), synergiesCsv(aggregate), 'utf8'),
+      writeFile(join(outDir, 'merge-paths.csv'), mergePathsCsv(data, aggregate), 'utf8'),
+      writeFile(join(outDir, 'durations.csv'), durationsCsv(aggregate), 'utf8'),
+    ]);
+    // Written last, so a crash mid-report never leaves a snapshot that claims
+    // to describe output that was not produced.
+    await writeFile(
+      join(outDir, SNAPSHOT_FILE),
+      `${JSON.stringify(buildSnapshot(aggregate, runInfo), null, 2)}\n`,
+      'utf8',
+    );
+  }
+
+  if (!options.quiet) {
+    const perSecond = elapsedMs > 0 ? (totalBattles / elapsedMs) * 1000 : 0;
+    console.log(
+      `  ${totalBattles.toLocaleString('en-US')} battles in ${(elapsedMs / 1000).toFixed(1)}s ` +
+        `(${perSecond.toFixed(0)}/s)`,
+    );
+    console.log(
+      `  outcomes    player ${aggregate.outcomes.player}  enemy ${aggregate.outcomes.enemy}  draw ${aggregate.outcomes.draw}`,
+    );
+    if (skipped.length > 0) {
+      console.log(`  note        merge study skipped for ${skipped.length} decision(s)`);
+    }
+    console.log('');
+    if (warnings.length === 0) {
+      console.log('  no warnings');
+    } else {
+      console.log(`  ${warnings.length} warning(s):`);
+      for (const warning of warnings) {
+        console.log(`    [${warning.area}] ${warning.message}`);
+      }
+    }
+    if (regressions.length > 0) {
+      console.log('');
+      console.log(`  ${regressions.length} unit(s) moved since the last report:`);
+      for (const row of regressions) {
+        const sign = row.deltaPp >= 0 ? '+' : '';
+        console.log(
+          `    ${data.units.get(row.unitId)?.name ?? row.unitId}: ` +
+            `${(row.before * 100).toFixed(1)}% -> ${(row.after * 100).toFixed(1)}% ` +
+            `(${sign}${row.deltaPp.toFixed(1)}pp)`,
+        );
+      }
+    }
+    if (options.writeReport) {
+      console.log('');
+      console.log(`  report      ${join(options.outDir, REPORT_FILE)}`);
+    }
+  }
+
+  // A non-zero exit lets CI fail on a balance warning without parsing output.
+  // Informational notes about coverage are not failures.
+  return warnings.some((warning) => warning.severity === 'warn') ? 1 : 0;
 }
 
-main(process.argv.slice(2));
+async function main(): Promise<void> {
+  let options: SimOptions;
+  try {
+    options = parseArgs(process.argv.slice(2));
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 2;
+    return;
+  }
+
+  if (options.help) {
+    console.log(USAGE);
+    return;
+  }
+
+  process.exitCode = await run(options);
+}
+
+await main();
