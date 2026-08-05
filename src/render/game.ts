@@ -28,6 +28,7 @@ export class Game {
   private atlas: Atlas | null = null;
   private scenes: SceneManager | null = null;
   private context: SceneContext | null = null;
+  private tuningPanel: { destroy(): void } | null = null;
 
   /**
    * Boots the renderer and starts the scene machine.
@@ -80,6 +81,19 @@ export class Game {
     app.ticker.add((ticker) => scenes.update(ticker.deltaMS));
 
     scenes.start('boot');
+
+    // Dev only. The dynamic import behind the guard is what keeps the panel —
+    // module, styles and all — out of the production bundle rather than
+    // shipped and merely hidden.
+    if (import.meta.env.DEV) {
+      void import('./dev/TuningPanel')
+        .then((module) => {
+          this.tuningPanel = module.mountTuningPanel();
+        })
+        .catch((error: unknown) => {
+          console.warn('tuning panel unavailable', error);
+        });
+    }
   }
 
   private handleResize(): void {
@@ -94,6 +108,8 @@ export class Game {
   }
 
   destroy(): void {
+    this.tuningPanel?.destroy();
+    this.tuningPanel = null;
     this.scenes?.destroy();
     this.atlas?.destroy();
     this.app?.destroy(true, { children: true });

@@ -23,10 +23,16 @@ export const RENDER = {
 export const LAYOUT = {
   /** Screen edge kept clear, as a fraction of the shorter axis. */
   safeMarginRatio: 0.045,
-  /** Share of the safe height the board may use, per orientation. */
-  boardHeightShare: { portrait: 0.6, landscape: 0.78 },
+  /**
+   * Share of the safe height the board may use, per orientation.
+   *
+   * Well under half, because the board is not the only thing on screen: the
+   * merge and fight buttons, the card tray and the hint all live below it, and
+   * on a phone they have to sit within thumb reach.
+   */
+  boardHeightShare: { portrait: 0.48, landscape: 0.55 },
   /** Where the board sits vertically inside the safe area, 0 = top. */
-  boardVerticalAnchor: { portrait: 0.42, landscape: 0.5 },
+  boardVerticalAnchor: { portrait: 0.16, landscape: 0.12 },
   /** Aspect at or above which the viewport counts as landscape. */
   landscapeAspect: 1,
   /** Cell size bounds in CSS pixels, so the board is neither tiny nor absurd. */
@@ -88,6 +94,20 @@ export const COLORS = {
   /** Feedback. */
   hitFlash: 0xffffff,
   healFlash: 0x8ff0a8,
+  /** Damage popups. Crits are hotter and larger, so they read without a label. */
+  damageNumber: 0xffe9c0,
+  critNumber: 0xff8a4a,
+  /** Merge sequence. */
+  mergeFlash: 0xfff2c8,
+  mergeWave: 0xf0c46a,
+  /** Drag targets. */
+  dropValid: 0x6fd08c,
+  dropInvalid: 0xe05a5a,
+  /** Cards, buttons and other furniture. */
+  cardFill: 0x161c28,
+  cardBorder: 0x2f394d,
+  buttonFill: 0x24304a,
+  buttonAccent: 0xf0c46a,
   /** Text. */
   text: 0xe8ecf4,
   textDim: 0x8b93a5,
@@ -186,6 +206,13 @@ export const ATLAS = {
   tagIconSize: 28,
   /** Size of the soft radial glow used behind units. */
   glowSize: 96,
+  /** Expanding shockwave ring, and how thick its outline is. */
+  waveSize: 96,
+  waveThickness: 0.045,
+  /** Small particle shapes. */
+  sparkSize: 20,
+  /** Font size digits are rasterised at. Scaled down at use, never up. */
+  digitSize: 44,
   /** Maximum atlas row width before wrapping to a new shelf. */
   maxWidth: 1024,
 } as const;

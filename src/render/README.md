@@ -38,9 +38,19 @@ same code and the renderer is not part of it.
 | `board.ts` | The grid surface, one `Graphics`, rebuilt only on resize. |
 | `camera.ts` | Fixed framing plus shake. |
 | `color.ts` | Colour blending. |
+| `tween.ts` | Easings, chaining, delay. Pooled. The whole animation system. |
+| `particles.ts` | Fixed pool of 500 sprites. Bursts and rings. |
+| `tuning.ts` | Every timing and intensity, live-mutable. |
 | `replay/BattleReplayer.ts` | Walks the event log along a timeline. |
 | `units/UnitView.ts` | One unit's sprites. |
 | `units/UnitPool.ts` | Recycles views across spawns and deaths. |
+| `effects/DamageNumbers.ts` | Pooled popups, composed from atlas digits. |
+| `effects/Hitstop.ts` | Freezes scaled time; real time keeps counting. |
+| `prep/BoardComposition.ts` | Board contents as plain data. No PixiJS. |
+| `prep/UnitCard.ts` | The card: tray slot, drag ghost, merge choice. |
+| `prep/PrepController.ts` | Tray, drag lifecycle, cell highlighting, buttons. |
+| `merge/MergeSequence.ts` | The five-stage merge choreography. |
+| `dev/TuningPanel.ts` | Slider overlay. Dev builds only. |
 | `scenes/` | The scene state machine and the four scenes. |
 
 ## Scenes
@@ -82,6 +92,27 @@ When art arrives, drop a texture into PixiJS's asset cache under a unit's
 `artKey`. `TextureRegistry` picks it up and stops tinting it; no scene or view
 changes.
 
+## Feel
+
+Timings and intensities live in `tuning.ts`, not in the code that uses them.
+Game feel is not reasoned into place; it is dialled in by moving a slider while
+playing. The dev panel edits that store live and copies the result out as JSON
+to paste back over the defaults.
+
+The merge sequence is on a hard budget — `MERGE_SEQUENCE_BUDGET_MS`, 900 ms
+excluding the wait for the player's choice, enforced by a test and shown live in
+the panel. It fires several times a round; a signature moment that outstays its
+welcome becomes an interruption.
+
+Two things are easy to get wrong here:
+
+- **Cancel tweens before destroying what they animate.** A choice card can be
+  picked while its own rise tween is still running; without a cancel the next
+  frame writes to a destroyed display object.
+- **Feed scaled time everywhere.** Tweens, particles and popups all take the
+  delta the hitstop system hands out, so a freeze holds the whole frame still
+  instead of letting particles sail on through it.
+
 ## Performance
 
 Measured on the built game with every cell on the board occupied:
@@ -91,6 +122,20 @@ Measured on the built game with every cell on the board occupied:
 | GL draw calls per frame | **2**, median and max |
 | Frame time (not fill-bound) | 16.8 ms median, vsync-locked |
 | JS heap over 4 s of battle | flat — collected, not grown |
+
+Particles, measured with the pool held saturated on a software GL context
+(swiftshader — no GPU, so these are pessimistic):
+
+| Live particles | Frame time | `update()` cost |
+| --- | --- | --- |
+| 0 | 16.7 ms (60 fps) | 0.005 ms |
+| 248 | 18.2 ms (55 fps) | 0.16 ms |
+| 496 | 19.5 ms (51 fps) | 0.24 ms |
+
+The simulation cost of a full pool is 0.24 ms — 1.5% of the frame budget. The
+rest of the difference is fill rate on a software rasteriser covering the whole
+viewport, which a real GPU does not charge for. All 500 share the atlas, so they
+add no draw calls.
 
 Two draw calls is the whole design working. Every sprite comes from the single
 atlas and the board is one static `Graphics`, so the draw count does not move
@@ -111,7 +156,12 @@ Three things keep it there, and each is easy to break:
 
 ## Testing
 
-`layout.ts` has unit tests. Everything else is verified by running the game —
+`layout.ts` and `tween.ts` have unit tests: easing curves, chain timing, the
+merge budget and the tuning store are pure arithmetic, and getting them wrong
+produces animation that is subtly off rather than obviously broken — exactly the
+kind of bug that survives a visual check.
+
+Everything else is verified by running the game —
 and **`npm run dev` is not enough**. The dev server serves modules unbundled,
 so it cannot see failures that only exist after Rollup has bundled the code.
 `npm run smoke` builds for production and checks the game actually starts.

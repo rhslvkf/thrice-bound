@@ -19,6 +19,8 @@ import { MAX_TIER } from '../../data/schema';
 import type { Atlas } from '../atlas';
 import { mixColor } from '../color';
 import { ANIM, COLORS, TAG_COLORS, UNIT_VIEW } from '../config';
+import { tuning } from '../tuning';
+import { Easings } from '../tween';
 import type { CellPlacement } from '../layout';
 import type { UnitVisual } from '../replay/BattleReplayer';
 import type { UnitArt } from '../textures';
@@ -44,6 +46,13 @@ export class UnitView {
 
   private teamColor: number = COLORS.team.player;
   private tintable = true;
+  /**
+   * Extra scale applied on top of everything else.
+   *
+   * Used by the merge landing punch, which is driven by the sequence rather
+   * than by anything on the unit itself.
+   */
+  private punch = 1;
 
   constructor(private readonly atlas: Atlas) {
     for (const sprite of [this.glow, this.body, this.ringTrack, this.ring]) {
@@ -132,6 +141,17 @@ export class UnitView {
     let x = placement.x;
     let y = placement.y;
 
+    // Knockback: a shove away from the blow that eases back. Small — its job
+    // is to make a hit feel like contact, not to move anyone.
+    if (visual.knockbackStartMs >= 0 && nowMs < visual.knockbackEndMs) {
+      const t =
+        (nowMs - visual.knockbackStartMs) /
+        Math.max(1, visual.knockbackEndMs - visual.knockbackStartMs);
+      const recoil = (1 - Easings.easeOutCubic(Math.max(0, Math.min(1, t)))) * size;
+      x += visual.knockbackX * recoil;
+      y += visual.knockbackY * recoil;
+    }
+
     // Attack lunge: out toward the target and back, as one sine arc.
     if (visual.attackStartMs >= 0 && nowMs < visual.attackEndMs) {
       const t = (nowMs - visual.attackStartMs) / (visual.attackEndMs - visual.attackStartMs);
@@ -152,11 +172,16 @@ export class UnitView {
       alpha = Math.max(0, (nowMs - visual.spawnAtMs) / ANIM.spawnMs);
     }
     if (!visual.alive && visual.deathAtMs >= 0) {
-      const t = Math.min(1, (nowMs - visual.deathAtMs) / ANIM.deathMs);
-      alpha = 1 - t;
-      this.root.scale.set(1 - t * 0.35);
+      // Squash first, then fade: the body gives before it goes, which reads as
+      // being destroyed rather than switched off.
+      const since = nowMs - visual.deathAtMs;
+      const squashT = Math.min(1, since / Math.max(1, tuning.death.squashMs));
+      const squash = tuning.death.squashAmount * Easings.easeOutCubic(squashT);
+      const fadeT = Math.min(1, since / Math.max(1, tuning.death.fadeMs));
+      alpha = 1 - fadeT;
+      this.root.scale.set(1 + squash * 0.5, Math.max(0.05, 1 - squash));
     } else {
-      this.root.scale.set(1);
+      this.root.scale.set(this.punch, this.punch);
     }
     this.root.alpha = Math.max(0, Math.min(1, alpha));
 
@@ -164,12 +189,18 @@ export class UnitView {
     this.body.width = bodySize;
     this.body.height = bodySize;
 
-    // Hit and heal flashes ride on tint, so no extra draw call.
+    // Hit and heal flashes ride on tint, so no extra draw call. The blend
+    // decays across the window rather than holding flat and snapping off: a
+    // board where several units are mid-flash at full strength loses its team
+    // colours entirely, and colour is how you read who is winning.
     const base = this.tintable ? this.teamColor : 0xffffff;
+    const flashMs = Math.max(1, tuning.hit.flashMs);
     if (nowMs < visual.flashUntilMs) {
-      this.body.tint = mixColor(base, COLORS.hitFlash, ANIM.flashBlend);
+      const decay = Math.min(1, (visual.flashUntilMs - nowMs) / flashMs);
+      this.body.tint = mixColor(base, COLORS.hitFlash, tuning.hit.flashBlend * decay);
     } else if (nowMs < visual.healUntilMs) {
-      this.body.tint = mixColor(base, COLORS.healFlash, ANIM.flashBlend);
+      const decay = Math.min(1, (visual.healUntilMs - nowMs) / flashMs);
+      this.body.tint = mixColor(base, COLORS.healFlash, tuning.hit.flashBlend * decay);
     } else {
       this.body.tint = base;
     }
@@ -276,11 +307,17 @@ export class UnitView {
     });
   }
 
+  /** Sets the landing punch. `1` is rest size. */
+  setPunch(scale: number): void {
+    this.punch = scale;
+  }
+
   /** Hides the view and hands it back to the pool. */
   release(): void {
     this.root.visible = false;
     this.root.alpha = 1;
     this.root.scale.set(1);
+    this.punch = 1;
   }
 
   destroy(): void {

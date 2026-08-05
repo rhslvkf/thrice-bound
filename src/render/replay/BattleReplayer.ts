@@ -67,6 +67,11 @@ export interface UnitVisual {
 
   flashUntilMs: number;
   healUntilMs: number;
+  /** Knockback impulse, in cell fractions, set by the scene on impact. */
+  knockbackX: number;
+  knockbackY: number;
+  knockbackStartMs: number;
+  knockbackEndMs: number;
   /** `false` once the death fade has finished and the view can be released. */
   present: boolean;
 }
@@ -107,6 +112,10 @@ function createVisual(): UnitVisual {
     cooldownEndMs: -1,
     flashUntilMs: -1,
     healUntilMs: -1,
+    knockbackX: 0,
+    knockbackY: 0,
+    knockbackStartMs: -1,
+    knockbackEndMs: -1,
     present: false,
   };
 }
@@ -135,6 +144,15 @@ export class BattleReplayer {
    * honest and keeps this file out of the balance business.
    */
   private readonly attackCooldownMs: Float64Array;
+
+  /**
+   * Called as each event is applied.
+   *
+   * The scene uses it to fire effects — damage numbers, hitstop, particles —
+   * without scanning the log itself. The replayer stays ignorant of what any
+   * of that means; it just says what happened and when.
+   */
+  private observer: ((event: BattleEvent, atMs: number) => void) | null = null;
 
   private cursor = 0;
   private elapsedMs = 0;
@@ -168,6 +186,10 @@ export class BattleReplayer {
     return this.order;
   }
 
+  setObserver(observer: ((event: BattleEvent, atMs: number) => void) | null): void {
+    this.observer = observer;
+  }
+
   setSpeed(speed: ReplaySpeed): void {
     this.speed = Math.max(0, speed);
   }
@@ -198,7 +220,12 @@ export class BattleReplayer {
 
   /** Plays the whole log at once and lands on the final frame. */
   skipToEnd(): void {
+    // Detached first: replaying every event's effects in one frame would fire
+    // hundreds of particles and a solid wall of hitstop.
+    const observer = this.observer;
+    this.observer = null;
     this.applyEventsUpTo(Number.POSITIVE_INFINITY);
+    this.observer = observer;
     this.elapsedMs = this.durationMs;
     for (const visual of this.order) {
       visual.renderCol = visual.col;
@@ -251,6 +278,7 @@ export class BattleReplayer {
       if (event === undefined) break;
       if (event.tick * BATTLE.tickMs > logTimeMs) break;
       this.apply(event, this.cursor);
+      this.observer?.(event, REPLAY.leadInMs + event.tick * BATTLE.tickMs);
       this.cursor += 1;
     }
   }
@@ -287,6 +315,7 @@ export class BattleReplayer {
         visual.cooldownStartMs = -1;
         visual.flashUntilMs = -1;
         visual.healUntilMs = -1;
+        visual.knockbackStartMs = -1;
         visual.present = true;
 
         this.visuals.set(event.instanceId, visual);

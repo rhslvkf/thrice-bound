@@ -16,7 +16,7 @@
  * unit on both teams.
  */
 
-import { Container, Graphics, Rectangle, RenderTexture, Texture } from 'pixi.js';
+import { Container, Graphics, Rectangle, RenderTexture, Text, Texture } from 'pixi.js';
 import type { Renderer } from 'pixi.js';
 import { ATLAS } from './config';
 
@@ -34,6 +34,22 @@ export interface Atlas {
   readonly tags: Readonly<Record<string, Texture>>;
   /** Soft radial falloff, for glows and shadows. */
   readonly glow: Texture;
+  /** Thin outline ring, for expanding pulse waves. */
+  readonly wave: Texture;
+  /** Small round particle. */
+  readonly spark: Texture;
+  /** Angular particle, for debris. */
+  readonly shard: Texture;
+  /**
+   * Digit glyphs `0`-`9`.
+   *
+   * Damage numbers are built from these rather than from `Text`. A `Text`
+   * object rasterises its own texture per distinct string, so a battle's worth
+   * of popups would mean a texture upload per number and a broken batch per
+   * popup. Composing from atlas digits keeps every number in the same draw
+   * call as everything else.
+   */
+  readonly digits: readonly Texture[];
   /** The backing render texture, destroyed with the atlas. */
   readonly source: RenderTexture;
   destroy(): void;
@@ -43,7 +59,9 @@ interface Item {
   readonly key: string;
   readonly width: number;
   readonly height: number;
-  readonly draw: (graphics: Graphics, width: number, height: number) => void;
+  /** Draws into a `Graphics`, or supplies a ready-made node (used by text). */
+  readonly draw?: (graphics: Graphics, width: number, height: number) => void;
+  readonly node?: Container;
 }
 
 // ---------------------------------------------------------------------------
@@ -110,6 +128,25 @@ function drawRingStep(g: Graphics, size: number, progress: number): void {
     color: 0xffffff,
     cap: 'round',
   });
+}
+
+/** A thin outline ring, scaled up over its life to read as a shockwave. */
+function drawWave(g: Graphics, size: number): void {
+  const thickness = size * ATLAS.waveThickness;
+  g.circle(size / 2, size / 2, size / 2 - thickness / 2).stroke({
+    width: thickness,
+    color: 0xffffff,
+  });
+}
+
+/** A soft round particle. */
+function drawSpark(g: Graphics, size: number): void {
+  g.circle(size / 2, size / 2, size / 2).fill(0xffffff);
+}
+
+/** An angular particle, so debris does not read as a cloud of dots. */
+function drawShard(g: Graphics, size: number): void {
+  g.poly([size / 2, 0, size, size * 0.62, size * 0.5, size, 0, size * 0.62]).fill(0xffffff);
 }
 
 function drawRingTrack(g: Graphics, size: number): void {
@@ -206,6 +243,9 @@ function buildItems(): Item[] {
     { key: 'shape:3', width: ATLAS.shapeSize, height: ATLAS.shapeSize, draw: (g, w) => drawStar(g, w) },
     { key: 'ringTrack', width: ATLAS.ringSize, height: ATLAS.ringSize, draw: (g, w) => drawRingTrack(g, w) },
     { key: 'glow', width: ATLAS.glowSize, height: ATLAS.glowSize, draw: (g, w) => drawGlow(g, w) },
+    { key: 'wave', width: ATLAS.waveSize, height: ATLAS.waveSize, draw: (g, w) => drawWave(g, w) },
+    { key: 'spark', width: ATLAS.sparkSize, height: ATLAS.sparkSize, draw: (g, w) => drawSpark(g, w) },
+    { key: 'shard', width: ATLAS.sparkSize, height: ATLAS.sparkSize, draw: (g, w) => drawShard(g, w) },
   ];
 
   for (let step = 0; step < ATLAS.ringSteps; step += 1) {
@@ -217,6 +257,35 @@ function buildItems(): Item[] {
       draw: (g, w) => drawRingStep(g, w, progress),
     });
   }
+
+  // Digits get one uniform frame each, sized to the widest and tallest of the
+  // ten and with the glyph centred in it. Cropping each digit to its own ink
+  // would make `1` a third the width of `8`, and a damage popup laid out from
+  // those frames either overlaps the wide digits or strands the narrow ones —
+  // `14` rendered as `1  4` reads as two separate numbers. A uniform box also
+  // makes numbers tabular, so a health total does not jitter as it counts down.
+  const glyphs = Array.from({ length: 10 }, (_, digit) => {
+    const text = new Text({
+      text: String(digit),
+      style: {
+        fill: 0xffffff,
+        fontSize: ATLAS.digitSize,
+        fontFamily: 'system-ui',
+        fontWeight: 'bold',
+      },
+    });
+    text.anchor.set(0.5);
+    return text;
+  });
+  const boxWidth = Math.ceil(Math.max(...glyphs.map((text) => text.width)));
+  const boxHeight = Math.ceil(Math.max(...glyphs.map((text) => text.height)));
+
+  glyphs.forEach((text, digit) => {
+    const box = new Container();
+    text.position.set(boxWidth / 2, boxHeight / 2);
+    box.addChild(text);
+    items.push({ key: `digit:${digit}`, width: boxWidth, height: boxHeight, node: box });
+  });
 
   for (const [tag, draw] of Object.entries(TAG_ICONS)) {
     items.push({
@@ -242,8 +311,13 @@ export function buildAtlas(renderer: Renderer): Atlas {
 
   const stage = new Container();
   for (const item of placed) {
+    if (item.node !== undefined) {
+      item.node.position.set(item.x, item.y);
+      stage.addChild(item.node);
+      continue;
+    }
     const graphics = new Graphics();
-    item.draw(graphics, item.width, item.height);
+    item.draw?.(graphics, item.width, item.height);
     graphics.position.set(item.x, item.y);
     stage.addChild(graphics);
   }
@@ -280,6 +354,9 @@ export function buildAtlas(renderer: Renderer): Atlas {
   const tags: Record<string, Texture> = {};
   for (const tag of Object.keys(TAG_ICONS)) tags[tag] = frame(`tag:${tag}`);
 
+  const digits: Texture[] = [];
+  for (let digit = 0; digit <= 9; digit += 1) digits.push(frame(`digit:${digit}`));
+
   return {
     pixel: frame('pixel'),
     shapes: { 1: frame('shape:1'), 2: frame('shape:2'), 3: frame('shape:3') },
@@ -287,6 +364,10 @@ export function buildAtlas(renderer: Renderer): Atlas {
     ringTrack: frame('ringTrack'),
     tags,
     glow: frame('glow'),
+    wave: frame('wave'),
+    spark: frame('spark'),
+    shard: frame('shard'),
+    digits,
     source,
     destroy(): void {
       for (const texture of frames.values()) texture.destroy(false);
