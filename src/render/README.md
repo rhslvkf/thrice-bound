@@ -24,7 +24,19 @@ the only place PixiJS is imported.
 
 ## Testing
 
-Not a unit-test target. Verify by running the game (`npm run dev`).
+Not a unit-test target. Verify by running the game — but **`npm run dev` is not
+enough**. The dev server serves modules unbundled, so it cannot see failures
+that only exist after Rollup has bundled the code. `npm run smoke` builds for
+production and checks that the game actually starts.
+
+### The top-level await trap
+
+The entry module must not use top-level `await`. PixiJS loads its environment
+and renderer through dynamic `import()`; once those land in the entry chunk, a
+dynamic import waits on the very module whose top-level await is still pending,
+and startup deadlocks with no error and no rejection — a permanently blank
+page. It reproduces only in the production build. `src/main.ts` therefore
+starts the boot without awaiting it.
 
 ## Contents
 

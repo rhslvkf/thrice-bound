@@ -82,6 +82,10 @@ procedural (`src/audio`) rather than shipping sample banks.
 - Core tests run under the `node` environment and must not need a DOM.
 - `src/render`, `src/ui` and `src/audio` are not unit-test targets; verify those
   by running the game.
+- **The dev server is not proof the game works.** It serves modules unbundled,
+  so it cannot see failures that only appear after Rollup bundles the code —
+  one such bug shipped a permanently blank page while `npm run dev` looked
+  fine. `npm run smoke` builds for production and checks the game starts.
 
 ## Commit conventions
 
@@ -116,4 +120,5 @@ Rules:
 | `npm run dev`    | Vite dev server                               |
 | `npm run build`  | Type-check, then production build to `dist/`  |
 | `npm test`       | Vitest, single run                            |
-| `npm run sim`    | Headless balance simulator (stub for now)     |
+| `npm run smoke`  | Build, then check the built game actually runs |
+| `npm run sim`    | Headless balance simulator + balance report   |

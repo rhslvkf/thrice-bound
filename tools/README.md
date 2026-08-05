@@ -24,6 +24,10 @@ total size, file count against the portal limits).
 
 - `print-merge-tree.ts` (`npm run data:tree`) — renders the unit merge graph as
   a text diagram, with a convergence summary and a reachability check.
+- `smoke-build.ts` (`npm run smoke`) — serves `dist/` from a subdirectory, the
+  way GitHub Pages and the portals do, and fails if the built game does not
+  start. Catches breakage that only exists after bundling, which no unit test
+  and no dev-server check can see.
 
 Asset packing scripts arrive with the first real art pass.
 

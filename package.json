@@ -9,6 +9,7 @@
     "build": "npm run typecheck && vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "smoke": "npm run build && tsx tools/smoke-build.ts",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
     "sim": "tsx src/sim/main.ts",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.1.2",
+    "playwright": "^1.62.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vite": "^6.0.5",
