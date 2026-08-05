@@ -28,7 +28,16 @@ outcome can be replayed in the game.
 - Sweep across many seeds before drawing a conclusion; single-run results are
   noise.
 
+## Usage
+
+| Command                 | What it does                                   |
+| ----------------------- | ---------------------------------------------- |
+| `npm run sim`           | One battle on the default seed, in detail      |
+| `npm run sim -- 42`     | One battle on seed 42                          |
+| `npm run sim -- 42 200` | 200 battles from seed 42, as a win-rate sweep  |
+
 ## Status
 
-Stub. `main.ts` currently just proves the RNG is reachable from Node. It fills
-in once battle resolution exists in core.
+Battles run. Team generation is still random rather than modelling real
+shop-and-merge decisions, and the sweep reports win rates but not per-unit or
+per-synergy pick rates. Those come next.

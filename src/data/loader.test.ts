@@ -42,6 +42,13 @@ function issuesFrom(mutate: (content: Record<Section, MutableContent>) => void):
   throw new Error('expected loadGameData to throw, but it succeeded');
 }
 
+/** Reads an array element, failing the test rather than asserting non-null. */
+function at<T>(items: readonly T[], index: number): T {
+  const item = items[index];
+  if (item === undefined) throw new Error(`test fixture has no element ${index}`);
+  return item;
+}
+
 /** Finds a definition by id inside a cloned section. */
 function find(
   content: Record<Section, MutableContent>,
@@ -216,7 +223,7 @@ describe('reference validation', () => {
   it('rejects a summon of an unknown unit', () => {
     const issues = issuesFrom((c) => {
       const ability = find(c, 'abilities', 'ability.raise_wisp');
-      (ability['effects'] as Record<string, unknown>[])[0]!['unitId'] = 'unit.ghost';
+      at(ability['effects'] as Record<string, unknown>[], 0)['unitId'] = 'unit.ghost';
     });
     expect(issues[0]).toContain('summons unknown unit "unit.ghost"');
   });
@@ -224,8 +231,8 @@ describe('reference validation', () => {
   it('rejects a relic granting an unknown unit', () => {
     const issues = issuesFrom((c) => {
       const relic = find(c, 'relics', 'relic.thrice_bound_seal');
-      const hook = (relic['hooks'] as Record<string, unknown>[])[0]!;
-      (hook['actions'] as Record<string, unknown>[])[1]!['unitId'] = 'unit.ghost';
+      const hook = at(relic['hooks'] as Record<string, unknown>[], 0);
+      at(hook['actions'] as Record<string, unknown>[], 1)['unitId'] = 'unit.ghost';
     });
     expect(issues[0]).toContain('grants unknown unit "unit.ghost"');
   });
@@ -233,7 +240,7 @@ describe('reference validation', () => {
   it('rejects an encounter placing an unknown unit', () => {
     const issues = issuesFrom((c) => {
       const encounter = find(c, 'encounters', 'encounter.r1_scurry');
-      (encounter['placements'] as Record<string, unknown>[])[0]!['unitId'] = 'unit.ghost';
+      at(encounter['placements'] as Record<string, unknown>[], 0)['unitId'] = 'unit.ghost';
     });
     expect(issues[0]).toContain('references unknown unit "unit.ghost"');
   });
@@ -250,7 +257,7 @@ describe('effect validation', () => {
   it('rejects an unknown effect kind', () => {
     const issues = issuesFrom((c) => {
       const ability = find(c, 'abilities', 'ability.spark_bolt');
-      (ability['effects'] as Record<string, unknown>[])[0]!['kind'] = 'teleport';
+      at(ability['effects'] as Record<string, unknown>[], 0)['kind'] = 'teleport';
     });
     expect(issues[0]).toContain('unknown effect kind "teleport"');
   });
@@ -258,7 +265,7 @@ describe('effect validation', () => {
   it('rejects a target mode that is missing its qualifier', () => {
     const issues = issuesFrom((c) => {
       const ability = find(c, 'abilities', 'ability.void_rift');
-      const effect = (ability['effects'] as Record<string, unknown>[])[0]!;
+      const effect = at(ability['effects'] as Record<string, unknown>[], 0);
       (effect['target'] as Record<string, unknown>)['count'] = null;
     });
     expect(issues[0]).toContain('target mode "randomEnemy" requires a count, got null');
@@ -267,7 +274,7 @@ describe('effect validation', () => {
   it('rejects a qualifier the target mode does not use', () => {
     const issues = issuesFrom((c) => {
       const ability = find(c, 'abilities', 'ability.spark_bolt');
-      const effect = (ability['effects'] as Record<string, unknown>[])[0]!;
+      const effect = at(ability['effects'] as Record<string, unknown>[], 0);
       (effect['target'] as Record<string, unknown>)['radius'] = 3;
     });
     expect(issues[0]).toContain('target mode "attackTarget" does not use radius');
@@ -315,7 +322,7 @@ describe('synergy and encounter rules', () => {
   it('rejects thresholds that do not ascend', () => {
     const issues = issuesFrom((c) => {
       const synergy = find(c, 'synergies', 'synergy.beast');
-      (synergy['thresholds'] as Record<string, unknown>[])[1]!['count'] = 2;
+      at(synergy['thresholds'] as Record<string, unknown>[], 1)['count'] = 2;
     });
     expect(issues[0]).toContain('thresholds must ascend, got 2 after 3');
   });
@@ -323,7 +330,7 @@ describe('synergy and encounter rules', () => {
   it('rejects an enemy placed on a player row', () => {
     const issues = issuesFrom((c) => {
       const encounter = find(c, 'encounters', 'encounter.r1_scurry');
-      (encounter['placements'] as Record<string, unknown>[])[0]!['row'] = 3;
+      at(encounter['placements'] as Record<string, unknown>[], 0)['row'] = 3;
     });
     expect(issues[0]).toContain('enemies must be placed on rows 0 or 1, got 3');
   });
@@ -331,7 +338,7 @@ describe('synergy and encounter rules', () => {
   it('rejects two enemies stacked on one cell', () => {
     const issues = issuesFrom((c) => {
       const encounter = find(c, 'encounters', 'encounter.r1_scurry');
-      (encounter['placements'] as Record<string, unknown>[])[1]!['col'] = 1;
+      at(encounter['placements'] as Record<string, unknown>[], 1)['col'] = 1;
     });
     expect(issues[0]).toContain('two enemies occupy cell (col 1, row 1)');
   });
@@ -339,7 +346,7 @@ describe('synergy and encounter rules', () => {
   it('rejects a placement off the board', () => {
     const issues = issuesFrom((c) => {
       const encounter = find(c, 'encounters', 'encounter.r1_scurry');
-      (encounter['placements'] as Record<string, unknown>[])[0]!['col'] = 5;
+      at(encounter['placements'] as Record<string, unknown>[], 0)['col'] = 5;
     });
     expect(issues[0]).toContain('expected a number <= 4');
   });
