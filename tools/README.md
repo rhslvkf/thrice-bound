@@ -20,6 +20,9 @@ total size, file count against the portal limits).
 - Keep dependencies here in `devDependencies`; they must never leak into the
   shipped bundle.
 
-## Status
+## Contents
 
-Empty for now. Scripts arrive with the first real art pass.
+- `print-merge-tree.ts` (`npm run data:tree`) — renders the unit merge graph as
+  a text diagram, with a convergence summary and a reachability check.
+
+Asset packing scripts arrive with the first real art pass.

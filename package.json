@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
-    "sim": "tsx src/sim/main.ts"
+    "sim": "tsx src/sim/main.ts",
+    "data:tree": "tsx tools/print-merge-tree.ts"
   },
   "dependencies": {
     "pixi.js": "^8.6.6"
