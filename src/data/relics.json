@@ -10,20 +10,52 @@
         {
           "on": "onRoundEnd",
           "condition": { "kind": "always", "value": null, "tag": null },
+          "chance": 1,
           "actions": [{ "kind": "grantGold", "amount": 2 }]
         }
       ],
       "artKey": "relic/brass_coin"
     },
     {
+      "id": "relic.field_rations",
+      "name": "Field Rations",
+      "rarity": "common",
+      "description": "One free reroll at the start of every round.",
+      "hooks": [
+        {
+          "on": "onRoundStart",
+          "condition": { "kind": "always", "value": null, "tag": null },
+          "chance": 1,
+          "actions": [{ "kind": "grantReroll", "amount": 1 }]
+        }
+      ],
+      "artKey": "relic/field_rations"
+    },
+    {
+      "id": "relic.scavengers_pouch",
+      "name": "Scavenger's Pouch",
+      "rarity": "common",
+      "description": "Every merge shakes 2 gold loose.",
+      "hooks": [
+        {
+          "on": "onMerge",
+          "condition": { "kind": "always", "value": null, "tag": null },
+          "chance": 1,
+          "actions": [{ "kind": "grantGold", "amount": 2 }]
+        }
+      ],
+      "artKey": "relic/scavengers_pouch"
+    },
+    {
       "id": "relic.hunters_totem",
       "name": "Hunter's Totem",
       "rarity": "common",
-      "description": "With 3 or more Beasts deployed, Beast allies gain 10% attack.",
+      "description": "With 3 or more Beasts deployed, Beast allies gain 12% attack.",
       "hooks": [
         {
           "on": "onBattleStart",
           "condition": { "kind": "tagCountAtLeast", "value": 3, "tag": "Beast" },
+          "chance": 1,
           "actions": [
             {
               "kind": "applyEffect",
@@ -32,7 +64,7 @@
                 "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Beast" },
                 "stat": "atk",
                 "op": "mult",
-                "amount": 0.1,
+                "amount": 0.12,
                 "durationMs": null
               }
             }
@@ -40,6 +72,173 @@
         }
       ],
       "artKey": "relic/hunters_totem"
+    },
+    {
+      "id": "relic.grave_censer",
+      "name": "Grave Censer",
+      "rarity": "common",
+      "description": "With 3 or more Undead deployed, Undead allies gain 14% max HP.",
+      "hooks": [
+        {
+          "on": "onBattleStart",
+          "condition": { "kind": "tagCountAtLeast", "value": 3, "tag": "Undead" },
+          "chance": 1,
+          "actions": [
+            {
+              "kind": "applyEffect",
+              "effect": {
+                "kind": "statMod",
+                "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Undead" },
+                "stat": "hp",
+                "op": "mult",
+                "amount": 0.14,
+                "durationMs": null
+              }
+            }
+          ]
+        }
+      ],
+      "artKey": "relic/grave_censer"
+    },
+    {
+      "id": "relic.rune_chalk",
+      "name": "Rune Chalk",
+      "rarity": "common",
+      "description": "With 3 or more Arcane deployed, Arcane allies attack 12% faster.",
+      "hooks": [
+        {
+          "on": "onBattleStart",
+          "condition": { "kind": "tagCountAtLeast", "value": 3, "tag": "Arcane" },
+          "chance": 1,
+          "actions": [
+            {
+              "kind": "applyEffect",
+              "effect": {
+                "kind": "statMod",
+                "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Arcane" },
+                "stat": "atkSpeed",
+                "op": "mult",
+                "amount": 0.12,
+                "durationMs": null
+              }
+            }
+          ]
+        }
+      ],
+      "artKey": "relic/rune_chalk"
+    },
+    {
+      "id": "relic.whetstone",
+      "name": "Foundry Whetstone",
+      "rarity": "common",
+      "description": "With 3 or more Steel deployed, Steel allies gain 6 attack.",
+      "hooks": [
+        {
+          "on": "onBattleStart",
+          "condition": { "kind": "tagCountAtLeast", "value": 3, "tag": "Steel" },
+          "chance": 1,
+          "actions": [
+            {
+              "kind": "applyEffect",
+              "effect": {
+                "kind": "statMod",
+                "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Steel" },
+                "stat": "atk",
+                "op": "add",
+                "amount": 6,
+                "durationMs": null
+              }
+            }
+          ]
+        }
+      ],
+      "artKey": "relic/whetstone"
+    },
+    {
+      "id": "relic.tinderbox",
+      "name": "Cracked Tinderbox",
+      "rarity": "common",
+      "description": "When an ally is struck, 25% chance to set the attacker alight.",
+      "hooks": [
+        {
+          "on": "onAllyDamaged",
+          "condition": { "kind": "always", "value": null, "tag": null },
+          "chance": 0.25,
+          "actions": [
+            {
+              "kind": "applyEffect",
+              "effect": {
+                "kind": "status",
+                "target": { "mode": "eventSource", "count": null, "radius": null, "tag": null },
+                "status": "burn",
+                "durationMs": 2000,
+                "magnitude": 6
+              }
+            }
+          ]
+        }
+      ],
+      "artKey": "relic/tinderbox"
+    },
+    {
+      "id": "relic.beastcallers_horn",
+      "name": "Beastcaller's Horn",
+      "rarity": "common",
+      "description": "Beasts appear far more often in the shop.",
+      "hooks": [
+        {
+          "on": "onRoundStart",
+          "condition": { "kind": "always", "value": null, "tag": null },
+          "chance": 1,
+          "actions": [{ "kind": "shopOdds", "tag": "Beast", "weightMult": 2 }]
+        }
+      ],
+      "artKey": "relic/beastcallers_horn"
+    },
+    {
+      "id": "relic.ossuary_key",
+      "name": "Ossuary Key",
+      "rarity": "common",
+      "description": "Undead appear far more often in the shop.",
+      "hooks": [
+        {
+          "on": "onRoundStart",
+          "condition": { "kind": "always", "value": null, "tag": null },
+          "chance": 1,
+          "actions": [{ "kind": "shopOdds", "tag": "Undead", "weightMult": 2 }]
+        }
+      ],
+      "artKey": "relic/ossuary_key"
+    },
+    {
+      "id": "relic.leyline_compass",
+      "name": "Leyline Compass",
+      "rarity": "common",
+      "description": "Arcane appear far more often in the shop.",
+      "hooks": [
+        {
+          "on": "onRoundStart",
+          "condition": { "kind": "always", "value": null, "tag": null },
+          "chance": 1,
+          "actions": [{ "kind": "shopOdds", "tag": "Arcane", "weightMult": 2 }]
+        }
+      ],
+      "artKey": "relic/leyline_compass"
+    },
+    {
+      "id": "relic.forge_stamp",
+      "name": "Forge Stamp",
+      "rarity": "common",
+      "description": "Steel appear far more often in the shop.",
+      "hooks": [
+        {
+          "on": "onRoundStart",
+          "condition": { "kind": "always", "value": null, "tag": null },
+          "chance": 1,
+          "actions": [{ "kind": "shopOdds", "tag": "Steel", "weightMult": 2 }]
+        }
+      ],
+      "artKey": "relic/forge_stamp"
     },
     {
       "id": "relic.merchants_ledger",
@@ -50,6 +249,7 @@
         {
           "on": "onRoundStart",
           "condition": { "kind": "goldAtMost", "value": 5, "tag": null },
+          "chance": 1,
           "actions": [
             { "kind": "grantGold", "amount": 3 },
             { "kind": "grantReroll", "amount": 1 }
@@ -62,11 +262,12 @@
       "id": "relic.grave_offering",
       "name": "Grave Offering",
       "rarity": "rare",
-      "description": "Each ally that falls mends the survivors for 4% of their max HP.",
+      "description": "Each ally that falls mends the survivors for 5% of their max HP.",
       "hooks": [
         {
           "on": "onUnitDeath",
           "condition": { "kind": "always", "value": null, "tag": null },
+          "chance": 1,
           "actions": [
             {
               "kind": "applyEffect",
@@ -74,7 +275,7 @@
                 "kind": "heal",
                 "target": { "mode": "allAllies", "count": null, "radius": null, "tag": null },
                 "amount": 0,
-                "scaleWithMaxHp": 0.04
+                "scaleWithMaxHp": 0.05
               }
             }
           ]
@@ -86,32 +287,289 @@
       "id": "relic.iron_lodestone",
       "name": "Iron Lodestone",
       "rarity": "rare",
-      "description": "Steel units appear far more often in the shop.",
+      "description": "With 4 or more Steel deployed, every ally gains 15% max HP.",
       "hooks": [
         {
-          "on": "onShopReroll",
-          "condition": { "kind": "always", "value": null, "tag": null },
-          "actions": [{ "kind": "shopOdds", "tag": "Steel", "weightMult": 1.75 }]
+          "on": "onBattleStart",
+          "condition": { "kind": "tagCountAtLeast", "value": 4, "tag": "Steel" },
+          "chance": 1,
+          "actions": [
+            {
+              "kind": "applyEffect",
+              "effect": {
+                "kind": "statMod",
+                "target": { "mode": "allAllies", "count": null, "radius": null, "tag": null },
+                "stat": "hp",
+                "op": "mult",
+                "amount": 0.15,
+                "durationMs": null
+              }
+            }
+          ]
         }
       ],
       "artKey": "relic/iron_lodestone"
     },
     {
-      "id": "relic.thrice_bound_seal",
-      "name": "Thrice-Bound Seal",
-      "rarity": "legendary",
-      "description": "From round 3 on, every merge pays out 2 gold and rouses a Grave Rat.",
+      "id": "relic.thornmail_shard",
+      "name": "Thornmail Shard",
+      "rarity": "rare",
+      "description": "When an ally is struck, 35% chance to return 9 damage to the attacker.",
       "hooks": [
         {
-          "on": "onMerge",
-          "condition": { "kind": "roundAtLeast", "value": 3, "tag": null },
+          "on": "onAllyDamaged",
+          "condition": { "kind": "always", "value": null, "tag": null },
+          "chance": 0.35,
           "actions": [
-            { "kind": "grantGold", "amount": 2 },
-            { "kind": "grantUnit", "unitId": "unit.grave_rat", "count": 1 }
+            {
+              "kind": "applyEffect",
+              "effect": {
+                "kind": "damage",
+                "target": { "mode": "eventSource", "count": null, "radius": null, "tag": null },
+                "amount": 9,
+                "damageType": "pure",
+                "scaleWithAtk": null
+              }
+            }
           ]
         }
       ],
-      "artKey": "relic/thrice_bound_seal"
+      "artKey": "relic/thornmail_shard"
+    },
+    {
+      "id": "relic.alpha_pelt",
+      "name": "Alpha's Pelt",
+      "rarity": "rare",
+      "description": "With 4 or more Beasts deployed, Beast allies gain 20% attack and close faster.",
+      "hooks": [
+        {
+          "on": "onBattleStart",
+          "condition": { "kind": "tagCountAtLeast", "value": 4, "tag": "Beast" },
+          "chance": 1,
+          "actions": [
+            {
+              "kind": "applyEffect",
+              "effect": {
+                "kind": "statMod",
+                "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Beast" },
+                "stat": "atk",
+                "op": "mult",
+                "amount": 0.2,
+                "durationMs": null
+              }
+            },
+            {
+              "kind": "applyEffect",
+              "effect": {
+                "kind": "statMod",
+                "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Beast" },
+                "stat": "moveSpeed",
+                "op": "mult",
+                "amount": 0.35,
+                "durationMs": null
+              }
+            }
+          ]
+        }
+      ],
+      "artKey": "relic/alpha_pelt"
+    },
+    {
+      "id": "relic.bone_reliquary",
+      "name": "Bone Reliquary",
+      "rarity": "rare",
+      "description": "With 4 or more Undead deployed, Undead allies begin behind a shield.",
+      "hooks": [
+        {
+          "on": "onBattleStart",
+          "condition": { "kind": "tagCountAtLeast", "value": 4, "tag": "Undead" },
+          "chance": 1,
+          "actions": [
+            {
+              "kind": "applyEffect",
+              "effect": {
+                "kind": "shield",
+                "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Undead" },
+                "amount": 0,
+                "scaleWithMaxHp": 0.22,
+                "durationMs": null
+              }
+            }
+          ]
+        }
+      ],
+      "artKey": "relic/bone_reliquary"
+    },
+    {
+      "id": "relic.void_prism",
+      "name": "Void Prism",
+      "rarity": "rare",
+      "description": "With 4 or more Arcane deployed, Arcane allies gain 22% attack.",
+      "hooks": [
+        {
+          "on": "onBattleStart",
+          "condition": { "kind": "tagCountAtLeast", "value": 4, "tag": "Arcane" },
+          "chance": 1,
+          "actions": [
+            {
+              "kind": "applyEffect",
+              "effect": {
+                "kind": "statMod",
+                "target": { "mode": "alliesWithTag", "count": null, "radius": null, "tag": "Arcane" },
+                "stat": "atk",
+                "op": "mult",
+                "amount": 0.22,
+                "durationMs": null
+              }
+            }
+          ]
+        }
+      ],
+      "artKey": "relic/void_prism"
+    },
+    {
+      "id": "relic.sigil_of_echoes",
+      "name": "Sigil of Echoes",
+      "rarity": "rare",
+      "description": "Every merge pays 3 gold and a reroll.",
+      "hooks": [
+        {
+          "on": "onMerge",
+          "condition": { "kind": "always", "value": null, "tag": null },
+          "chance": 1,
+          "actions": [
+            { "kind": "grantGold", "amount": 3 },
+            { "kind": "grantReroll", "amount": 1 }
+          ]
+        }
+      ],
+      "artKey": "relic/sigil_of_echoes"
+    },
+    {
+      "id": "relic.stray_conscript",
+      "name": "Stray Conscript",
+      "rarity": "rare",
+      "description": "From round 4 on, a Grave Rat reports for duty each round.",
+      "hooks": [
+        {
+          "on": "onRoundStart",
+          "condition": { "kind": "roundAtLeast", "value": 4, "tag": null },
+          "chance": 1,
+          "actions": [{ "kind": "grantUnit", "unitId": "unit.grave_rat", "count": 1 }]
+        }
+      ],
+      "artKey": "relic/stray_conscript"
+    },
+    {
+      "id": "relic.thrice_forged_core",
+      "name": "Thrice-Forged Core",
+      "rarity": "legendary",
+      "description": "Every ally gains 12% attack and 12% max HP.",
+      "hooks": [
+        {
+          "on": "onBattleStart",
+          "condition": { "kind": "always", "value": null, "tag": null },
+          "chance": 1,
+          "actions": [
+            {
+              "kind": "applyEffect",
+              "effect": {
+                "kind": "statMod",
+                "target": { "mode": "allAllies", "count": null, "radius": null, "tag": null },
+                "stat": "atk",
+                "op": "mult",
+                "amount": 0.12,
+                "durationMs": null
+              }
+            },
+            {
+              "kind": "applyEffect",
+              "effect": {
+                "kind": "statMod",
+                "target": { "mode": "allAllies", "count": null, "radius": null, "tag": null },
+                "stat": "hp",
+                "op": "mult",
+                "amount": 0.12,
+                "durationMs": null
+              }
+            }
+          ]
+        }
+      ],
+      "artKey": "relic/thrice_forged_core"
+    },
+    {
+      "id": "relic.crown_of_rot",
+      "name": "Crown of Rot",
+      "rarity": "legendary",
+      "description": "Every ally that falls detonates for 14 damage to all enemies.",
+      "hooks": [
+        {
+          "on": "onUnitDeath",
+          "condition": { "kind": "always", "value": null, "tag": null },
+          "chance": 1,
+          "actions": [
+            {
+              "kind": "applyEffect",
+              "effect": {
+                "kind": "damage",
+                "target": { "mode": "allEnemies", "count": null, "radius": null, "tag": null },
+                "amount": 14,
+                "damageType": "pure",
+                "scaleWithAtk": null
+              }
+            }
+          ]
+        }
+      ],
+      "artKey": "relic/crown_of_rot"
+    },
+    {
+      "id": "relic.aegis_eternal",
+      "name": "Aegis Eternal",
+      "rarity": "legendary",
+      "description": "When an ally is struck, 20% chance it is shielded for 10% of its max HP.",
+      "hooks": [
+        {
+          "on": "onAllyDamaged",
+          "condition": { "kind": "always", "value": null, "tag": null },
+          "chance": 0.2,
+          "actions": [
+            {
+              "kind": "applyEffect",
+              "effect": {
+                "kind": "shield",
+                "target": { "mode": "self", "count": null, "radius": null, "tag": null },
+                "amount": 0,
+                "scaleWithMaxHp": 0.1,
+                "durationMs": null
+              }
+            }
+          ]
+        }
+      ],
+      "artKey": "relic/aegis_eternal"
+    },
+    {
+      "id": "relic.midas_engine",
+      "name": "Midas Engine",
+      "rarity": "legendary",
+      "description": "Earn 5 extra gold each round, and 1 back on every reroll.",
+      "hooks": [
+        {
+          "on": "onRoundEnd",
+          "condition": { "kind": "always", "value": null, "tag": null },
+          "chance": 1,
+          "actions": [{ "kind": "grantGold", "amount": 5 }]
+        },
+        {
+          "on": "onShopReroll",
+          "condition": { "kind": "always", "value": null, "tag": null },
+          "chance": 1,
+          "actions": [{ "kind": "grantGold", "amount": 1 }]
+        }
+      ],
+      "artKey": "relic/midas_engine"
     }
   ]
 }

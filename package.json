@@ -13,6 +13,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
     "sim": "tsx src/sim/main.ts",
+    "sim:runs": "tsx src/sim/runmain.ts",
     "data:tree": "tsx tools/print-merge-tree.ts"
   },
   "dependencies": {

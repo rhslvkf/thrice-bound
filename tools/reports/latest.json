@@ -1,289 +1,289 @@
 {
   "version": 1,
   "run": {
-    "matches": 10000,
-    "seed": 42,
+    "matches": 3000,
+    "seed": 1,
     "workers": 4,
     "teamSize": 4,
-    "mergeSamples": 300,
-    "battles": 22000,
-    "elapsedMs": 10725,
-    "generatedAt": "2026-08-05T08:35:27.300Z"
+    "mergeSamples": 150,
+    "battles": 9000,
+    "elapsedMs": 4255,
+    "generatedAt": "2026-08-06T00:52:22.069Z"
   },
   "units": {
     "unit.alpha_howler": {
-      "winRate": 0.4212406015037594,
-      "presence": 2660
+      "winRate": 0.4021197007481297,
+      "presence": 802
     },
     "unit.archon_of_ash": {
-      "winRate": 0.7685539403213466,
-      "presence": 2614
+      "winRate": 0.7661188369152971,
+      "presence": 791
     },
     "unit.blade_dancer": {
-      "winRate": 0.4237415477084899,
-      "presence": 2662
+      "winRate": 0.43284493284493286,
+      "presence": 819
     },
     "unit.bone_acolyte": {
-      "winRate": 0.4520651762031072,
-      "presence": 2639
+      "winRate": 0.47099621689785626,
+      "presence": 793
     },
     "unit.bone_leviathan": {
-      "winRate": 0.6179795769511306,
-      "presence": 2742
+      "winRate": 0.6411042944785276,
+      "presence": 815
     },
     "unit.bramble_stalker": {
-      "winRate": 0.4317099963383376,
-      "presence": 2731
+      "winRate": 0.41811414392059554,
+      "presence": 806
     },
     "unit.crypt_weaver": {
-      "winRate": 0.5009359790340696,
-      "presence": 2671
+      "winRate": 0.5121506682867558,
+      "presence": 823
     },
     "unit.dire_pup": {
-      "winRate": 0.3379360465116279,
-      "presence": 2752
+      "winRate": 0.3325153374233129,
+      "presence": 815
     },
     "unit.ember_magus": {
-      "winRate": 0.5975609756097561,
-      "presence": 2747
+      "winRate": 0.5967153284671532,
+      "presence": 822
     },
     "unit.forge_apprentice": {
-      "winRate": 0.3249361080686382,
-      "presence": 2739
+      "winRate": 0.32666666666666666,
+      "presence": 825
     },
     "unit.gear_artificer": {
-      "winRate": 0.46551094890510947,
-      "presence": 2740
+      "winRate": 0.4752116082224909,
+      "presence": 827
     },
     "unit.grave_rat": {
-      "winRate": 0.33141049497580943,
-      "presence": 2687
+      "winRate": 0.33559950556242274,
+      "presence": 809
     },
     "unit.iron_bulwark": {
-      "winRate": 0.47120121258052294,
-      "presence": 2639
+      "winRate": 0.4555112881806109,
+      "presence": 753
     },
     "unit.lich_regent": {
-      "winRate": 0.7196278730390369,
-      "presence": 2741
+      "winRate": 0.7279503105590062,
+      "presence": 805
     },
     "unit.moss_warden": {
-      "winRate": 0.5330910482019893,
-      "presence": 2614
+      "winRate": 0.5384122919334187,
+      "presence": 781
     },
     "unit.plague_hound": {
-      "winRate": 0.4603388525221409,
-      "presence": 2597
+      "winRate": 0.44891443167305234,
+      "presence": 783
     },
     "unit.primal_avatar": {
-      "winRate": 0.5596693026599568,
-      "presence": 2782
+      "winRate": 0.5494858611825193,
+      "presence": 778
     },
     "unit.rot_knight": {
-      "winRate": 0.4300184162062615,
-      "presence": 2715
+      "winRate": 0.4215922798552473,
+      "presence": 829
     },
     "unit.rune_scribe": {
-      "winRate": 0.4522776572668113,
-      "presence": 2766
+      "winRate": 0.4472748815165877,
+      "presence": 844
     },
     "unit.scrap_sentry": {
-      "winRate": 0.33804075795495175,
-      "presence": 2797
+      "winRate": 0.3404605263157895,
+      "presence": 912
     },
     "unit.sigil_adept": {
-      "winRate": 0.47476459510357816,
-      "presence": 2655
+      "winRate": 0.47770700636942676,
+      "presence": 785
     },
     "unit.sovereign_engine": {
-      "winRate": 0.5959367945823928,
-      "presence": 2658
+      "winRate": 0.6032745591939547,
+      "presence": 794
     },
     "unit.spark_imp": {
-      "winRate": 0.456,
-      "presence": 2750
+      "winRate": 0.4528985507246377,
+      "presence": 828
     },
     "unit.thornling": {
-      "winRate": 0.3613338192419825,
-      "presence": 2744
+      "winRate": 0.36674816625916873,
+      "presence": 818
     },
     "unit.titan_of_the_forge": {
-      "winRate": 0.6329749103942652,
-      "presence": 2790
+      "winRate": 0.6308962264150944,
+      "presence": 848
     },
     "unit.verdant_colossus": {
-      "winRate": 0.6963814549566528,
-      "presence": 2653
+      "winRate": 0.6875816993464052,
+      "presence": 765
     },
     "unit.void_caller": {
-      "winRate": 0.5400429031104755,
-      "presence": 2797
+      "winRate": 0.5636147443519619,
+      "presence": 841
     },
     "unit.void_sovereign": {
-      "winRate": 0.6449002634550245,
-      "presence": 2657
+      "winRate": 0.654747225647349,
+      "presence": 811
     }
   },
   "mergePaths": {
     "unit.alpha_howler>unit.primal_avatar": {
-      "winRate": 0.64,
-      "samples": 300
+      "winRate": 0.6066666666666667,
+      "samples": 150
     },
     "unit.alpha_howler>unit.verdant_colossus": {
-      "winRate": 0.8033333333333333,
-      "samples": 300
+      "winRate": 0.7933333333333333,
+      "samples": 150
     },
     "unit.blade_dancer>unit.sovereign_engine": {
-      "winRate": 0.68,
-      "samples": 300
+      "winRate": 0.6733333333333333,
+      "samples": 150
     },
     "unit.blade_dancer>unit.titan_of_the_forge": {
-      "winRate": 0.7483333333333333,
-      "samples": 300
+      "winRate": 0.7266666666666667,
+      "samples": 150
     },
     "unit.bone_acolyte>unit.crypt_weaver": {
       "winRate": 0.4533333333333333,
-      "samples": 300
+      "samples": 150
     },
     "unit.bone_acolyte>unit.rot_knight": {
-      "winRate": 0.4683333333333333,
-      "samples": 300
+      "winRate": 0.4666666666666667,
+      "samples": 150
     },
     "unit.bramble_stalker>unit.primal_avatar": {
-      "winRate": 0.6033333333333334,
-      "samples": 300
+      "winRate": 0.6333333333333333,
+      "samples": 150
     },
     "unit.bramble_stalker>unit.verdant_colossus": {
-      "winRate": 0.8,
-      "samples": 300
+      "winRate": 0.82,
+      "samples": 150
     },
     "unit.crypt_weaver>unit.lich_regent": {
-      "winRate": 0.615,
-      "samples": 300
+      "winRate": 0.6333333333333333,
+      "samples": 150
     },
     "unit.crypt_weaver>unit.void_sovereign": {
-      "winRate": 0.6433333333333333,
-      "samples": 300
+      "winRate": 0.64,
+      "samples": 150
     },
     "unit.dire_pup>unit.alpha_howler": {
-      "winRate": 0.47333333333333333,
-      "samples": 300
+      "winRate": 0.44666666666666666,
+      "samples": 150
     },
     "unit.dire_pup>unit.moss_warden": {
-      "winRate": 0.565,
-      "samples": 300
+      "winRate": 0.52,
+      "samples": 150
     },
     "unit.ember_magus>unit.archon_of_ash": {
-      "winRate": 0.6883333333333334,
-      "samples": 300
+      "winRate": 0.6433333333333333,
+      "samples": 150
     },
     "unit.ember_magus>unit.void_sovereign": {
-      "winRate": 0.6216666666666667,
-      "samples": 300
+      "winRate": 0.6066666666666667,
+      "samples": 150
     },
     "unit.forge_apprentice>unit.blade_dancer": {
-      "winRate": 0.4266666666666667,
-      "samples": 300
+      "winRate": 0.44666666666666666,
+      "samples": 150
     },
     "unit.forge_apprentice>unit.gear_artificer": {
-      "winRate": 0.47333333333333333,
-      "samples": 300
+      "winRate": 0.4533333333333333,
+      "samples": 150
     },
     "unit.gear_artificer>unit.primal_avatar": {
-      "winRate": 0.5916666666666667,
-      "samples": 300
+      "winRate": 0.6333333333333333,
+      "samples": 150
     },
     "unit.gear_artificer>unit.titan_of_the_forge": {
-      "winRate": 0.7366666666666667,
-      "samples": 300
+      "winRate": 0.8,
+      "samples": 150
     },
     "unit.grave_rat>unit.crypt_weaver": {
-      "winRate": 0.4216666666666667,
-      "samples": 300
+      "winRate": 0.37333333333333335,
+      "samples": 150
     },
     "unit.grave_rat>unit.plague_hound": {
-      "winRate": 0.4,
-      "samples": 300
+      "winRate": 0.3933333333333333,
+      "samples": 150
     },
     "unit.iron_bulwark>unit.sovereign_engine": {
-      "winRate": 0.6283333333333333,
-      "samples": 300
+      "winRate": 0.63,
+      "samples": 150
     },
     "unit.iron_bulwark>unit.titan_of_the_forge": {
-      "winRate": 0.7516666666666667,
-      "samples": 300
+      "winRate": 0.7466666666666667,
+      "samples": 150
     },
     "unit.moss_warden>unit.bone_leviathan": {
-      "winRate": 0.7566666666666667,
-      "samples": 300
+      "winRate": 0.8066666666666666,
+      "samples": 150
     },
     "unit.moss_warden>unit.verdant_colossus": {
-      "winRate": 0.79,
-      "samples": 300
+      "winRate": 0.8466666666666667,
+      "samples": 150
     },
     "unit.plague_hound>unit.bone_leviathan": {
-      "winRate": 0.7533333333333333,
-      "samples": 300
+      "winRate": 0.76,
+      "samples": 150
     },
     "unit.plague_hound>unit.lich_regent": {
-      "winRate": 0.5716666666666667,
-      "samples": 300
+      "winRate": 0.5233333333333333,
+      "samples": 150
     },
     "unit.rot_knight>unit.bone_leviathan": {
-      "winRate": 0.7633333333333333,
-      "samples": 300
+      "winRate": 0.8033333333333333,
+      "samples": 150
     },
     "unit.rot_knight>unit.lich_regent": {
-      "winRate": 0.5866666666666667,
-      "samples": 300
+      "winRate": 0.5466666666666666,
+      "samples": 150
     },
     "unit.rune_scribe>unit.sigil_adept": {
-      "winRate": 0.5266666666666666,
-      "samples": 300
+      "winRate": 0.49333333333333335,
+      "samples": 150
     },
     "unit.rune_scribe>unit.void_caller": {
-      "winRate": 0.48833333333333334,
-      "samples": 300
+      "winRate": 0.45666666666666667,
+      "samples": 150
     },
     "unit.scrap_sentry>unit.gear_artificer": {
-      "winRate": 0.44666666666666666,
-      "samples": 300
+      "winRate": 0.4866666666666667,
+      "samples": 150
     },
     "unit.scrap_sentry>unit.iron_bulwark": {
-      "winRate": 0.535,
-      "samples": 300
+      "winRate": 0.5333333333333333,
+      "samples": 150
     },
     "unit.sigil_adept>unit.archon_of_ash": {
       "winRate": 0.6866666666666666,
-      "samples": 300
+      "samples": 150
     },
     "unit.sigil_adept>unit.sovereign_engine": {
-      "winRate": 0.6566666666666666,
-      "samples": 300
+      "winRate": 0.64,
+      "samples": 150
     },
     "unit.spark_imp>unit.ember_magus": {
-      "winRate": 0.49166666666666664,
-      "samples": 300
+      "winRate": 0.4866666666666667,
+      "samples": 150
     },
     "unit.spark_imp>unit.sigil_adept": {
-      "winRate": 0.535,
-      "samples": 300
+      "winRate": 0.56,
+      "samples": 150
     },
     "unit.thornling>unit.bramble_stalker": {
-      "winRate": 0.40166666666666667,
-      "samples": 300
+      "winRate": 0.44,
+      "samples": 150
     },
     "unit.thornling>unit.moss_warden": {
-      "winRate": 0.52,
-      "samples": 300
+      "winRate": 0.54,
+      "samples": 150
     },
     "unit.void_caller>unit.archon_of_ash": {
-      "winRate": 0.6933333333333334,
-      "samples": 300
+      "winRate": 0.6466666666666666,
+      "samples": 150
     },
     "unit.void_caller>unit.void_sovereign": {
-      "winRate": 0.5866666666666667,
-      "samples": 300
+      "winRate": 0.5133333333333333,
+      "samples": 150
     }
   }
 }

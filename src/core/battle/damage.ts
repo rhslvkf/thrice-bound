@@ -14,6 +14,10 @@
 import { BATTLE, COMBAT } from '../config';
 import type { BattleContext } from './context';
 import { emit, unitById } from './context';
+// Cyclic with `effects.ts` -> `damage.ts`: relic hooks apply effects, and
+// effects deal damage. Every export involved is a hoisted function
+// declaration, so both halves are defined by the time either is called.
+import { applyDamagedRelics, applyDeathRelics } from './relics';
 import {
   absorbWithShields,
   effectiveStat,
@@ -96,6 +100,10 @@ export function dealDamage(
       unitId: target.instanceId,
       sourceId,
     });
+    // Relic reactions run inline rather than queued: their effects are small
+    // and self-contained, and a retaliation that lands a tick late would read
+    // as belonging to the wrong hit in the event log.
+    applyDamagedRelics(ctx, target, sourceId);
   }
 
   if (lethal) kill(ctx, target, sourceId);
@@ -115,6 +123,8 @@ export function kill(
   target.targetId = null;
 
   emit(ctx, { kind: 'death', instanceId: target.instanceId, killerId });
+
+  applyDeathRelics(ctx, target, killerId);
 
   ctx.pendingTriggers.push({
     kind: 'onDeath',

@@ -17,11 +17,13 @@
 import abilitiesJson from './abilities.json';
 import encountersJson from './encounters.json';
 import relicsJson from './relics.json';
+import runJson from './run.json';
 import synergiesJson from './synergies.json';
 import unitsJson from './units.json';
 
 import {
   ABILITY_TRIGGERS,
+  BATTLE_RELIC_TRIGGERS,
   BOARD,
   DAMAGE_TYPES,
   MAX_TIER,
@@ -41,9 +43,13 @@ import {
   type EnemyPlacement,
   type GameData,
   type RelicAction,
+  type RarityWeight,
   type RelicCondition,
   type RelicDef,
   type RelicHook,
+  type RunConfig,
+  type RunRules,
+  type ShopTierOdds,
   type SynergyDef,
   type SynergyThreshold,
   type TargetSelector,
@@ -53,6 +59,7 @@ import {
 } from './schema';
 import {
   asArray,
+  asBoolean,
   asEnum,
   asNullOr,
   asNumber,
@@ -511,7 +518,7 @@ function parseRelicAction(raw: unknown, path: string): RelicAction {
 
 function parseRelicHook(raw: unknown, path: string): RelicHook {
   const object = asObject(raw, path);
-  exactKeys(object, path, ['on', 'condition', 'actions']);
+  exactKeys(object, path, ['on', 'condition', 'chance', 'actions']);
   const rawActions = asArray(object['actions'], `${path}.actions`);
   if (rawActions.length === 0) {
     fail(`${path}.actions`, 'expected at least one action');
@@ -519,6 +526,7 @@ function parseRelicHook(raw: unknown, path: string): RelicHook {
   return {
     on: asEnum(object['on'], `${path}.on`, RELIC_TRIGGERS),
     condition: parseRelicCondition(object['condition'], `${path}.condition`),
+    chance: asNumber(object['chance'], `${path}.chance`, { min: 0, max: 1 }),
     actions: rawActions.map((action, index) =>
       parseRelicAction(action, `${path}.actions[${index}]`),
     ),
@@ -570,7 +578,15 @@ function parsePlacement(raw: unknown, path: string): EnemyPlacement {
 
 function parseEncounter(raw: unknown, path: string): EncounterDef {
   const object = asObject(raw, path);
-  exactKeys(object, path, ['id', 'round', 'name', 'placements', 'goldReward', 'artKey']);
+  exactKeys(object, path, [
+    'id',
+    'round',
+    'name',
+    'boss',
+    'placements',
+    'goldReward',
+    'artKey',
+  ]);
 
   const rawPlacements = asArray(object['placements'], `${path}.placements`);
   if (rawPlacements.length === 0) {
@@ -593,6 +609,7 @@ function parseEncounter(raw: unknown, path: string): EncounterDef {
     id: asString(object['id'], `${path}.id`),
     round: asNumber(object['round'], `${path}.round`, { integer: true, min: 1 }),
     name: asString(object['name'], `${path}.name`),
+    boss: asBoolean(object['boss'], `${path}.boss`),
     placements,
     goldReward: asNumber(object['goldReward'], `${path}.goldReward`, {
       integer: true,
@@ -600,6 +617,147 @@ function parseEncounter(raw: unknown, path: string): EncounterDef {
     }),
     artKey: asString(object['artKey'], `${path}.artKey`),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Run configuration
+// ---------------------------------------------------------------------------
+
+function parseRunRules(raw: unknown, path: string): RunRules {
+  const object = asObject(raw, path);
+  exactKeys(object, path, [
+    'rounds',
+    'bossRounds',
+    'startingLives',
+    'startingGold',
+    'baseIncome',
+    'incomePerRound',
+    'winBonusGold',
+    'interestPerGold',
+    'interestCap',
+    'rerollCost',
+    'shopSlots',
+    'rewardChoices',
+    'rewardRandomShare',
+    'rewardTagAffinity',
+    'sellRefundShare',
+  ]);
+
+  const rounds = asNumber(object['rounds'], `${path}.rounds`, { integer: true, min: 1 });
+  const bossRounds = asArray(object['bossRounds'], `${path}.bossRounds`).map((value, index) =>
+    asNumber(value, `${path}.bossRounds[${index}]`, { integer: true, min: 1, max: rounds }),
+  );
+  for (let i = 1; i < bossRounds.length; i += 1) {
+    // Ascending and distinct, so "the next boss" is a scan rather than a sort.
+    if ((bossRounds[i] ?? 0) <= (bossRounds[i - 1] ?? 0)) {
+      fail(`${path}.bossRounds`, `expected strictly ascending rounds, got ${bossRounds.join(', ')}`);
+    }
+  }
+
+  return {
+    rounds,
+    bossRounds,
+    startingLives: asNumber(object['startingLives'], `${path}.startingLives`, {
+      integer: true,
+      min: 1,
+    }),
+    startingGold: asNumber(object['startingGold'], `${path}.startingGold`, {
+      integer: true,
+      min: 0,
+    }),
+    baseIncome: asNumber(object['baseIncome'], `${path}.baseIncome`, {
+      integer: true,
+      min: 0,
+    }),
+    incomePerRound: asNumber(object['incomePerRound'], `${path}.incomePerRound`, {
+      integer: true,
+      min: 0,
+    }),
+    winBonusGold: asNumber(object['winBonusGold'], `${path}.winBonusGold`, {
+      integer: true,
+      min: 0,
+    }),
+    interestPerGold: asNumber(object['interestPerGold'], `${path}.interestPerGold`, {
+      integer: true,
+      min: 1,
+    }),
+    interestCap: asNumber(object['interestCap'], `${path}.interestCap`, {
+      integer: true,
+      min: 0,
+    }),
+    rerollCost: asNumber(object['rerollCost'], `${path}.rerollCost`, {
+      integer: true,
+      min: 0,
+    }),
+    shopSlots: asNumber(object['shopSlots'], `${path}.shopSlots`, { integer: true, min: 1 }),
+    rewardChoices: asNumber(object['rewardChoices'], `${path}.rewardChoices`, {
+      integer: true,
+      min: 1,
+    }),
+    rewardRandomShare: asNumber(object['rewardRandomShare'], `${path}.rewardRandomShare`, {
+      min: 0,
+      max: 1,
+    }),
+    rewardTagAffinity: asNumber(object['rewardTagAffinity'], `${path}.rewardTagAffinity`, {
+      min: 0,
+    }),
+    sellRefundShare: asNumber(object['sellRefundShare'], `${path}.sellRefundShare`, {
+      min: 0,
+      max: 1,
+    }),
+  };
+}
+
+function parseRarityWeight(raw: unknown, path: string): RarityWeight {
+  const object = asObject(raw, path);
+  exactKeys(object, path, ['rarity', 'weight', 'minRound']);
+  return {
+    rarity: asEnum(object['rarity'], `${path}.rarity`, RELIC_RARITIES),
+    weight: asNumber(object['weight'], `${path}.weight`, { min: 0 }),
+    minRound: asNumber(object['minRound'], `${path}.minRound`, { integer: true, min: 1 }),
+  };
+}
+
+function parseShopTierOdds(raw: unknown, path: string): ShopTierOdds {
+  const object = asObject(raw, path);
+  exactKeys(object, path, ['round', 'tier1', 'tier2', 'tier3']);
+  const row: ShopTierOdds = {
+    round: asNumber(object['round'], `${path}.round`, { integer: true, min: 1 }),
+    tier1: asNumber(object['tier1'], `${path}.tier1`, { min: 0 }),
+    tier2: asNumber(object['tier2'], `${path}.tier2`, { min: 0 }),
+    tier3: asNumber(object['tier3'], `${path}.tier3`, { min: 0 }),
+  };
+  // A row of zeroes would leave the shop with nothing to offer and no way to
+  // say so; catching it here beats catching it as an empty shop at round 9.
+  if (row.tier1 + row.tier2 + row.tier3 <= 0) {
+    fail(path, 'expected at least one tier to have a non-zero weight');
+  }
+  return row;
+}
+
+function parseRunConfig(raw: unknown): RunConfig {
+  const object = asObject(raw, 'run');
+  exactKeys(object, 'run', ['version', 'rules', 'rarityWeights', 'shopTierOdds']);
+
+  const rules = parseRunRules(object['rules'], 'run.rules');
+  const rarityWeights = validateEach(
+    asArray(object['rarityWeights'], 'run.rarityWeights'),
+    'run.rarityWeights',
+    parseRarityWeight,
+  );
+  const shopTierOdds = validateEach(
+    asArray(object['shopTierOdds'], 'run.shopTierOdds'),
+    'run.shopTierOdds',
+    parseShopTierOdds,
+  ).sort((a, b) => a.round - b.round);
+
+  return { rules, rarityWeights, shopTierOdds };
+}
+
+/** Version of `run.json`, read separately so it can join the version check. */
+function runConfigVersion(raw: unknown): number {
+  const object = asObject(raw, 'run');
+  return asNumber(object['version'], 'run.version', { integer: true, min: 1 });
 }
 
 // ---------------------------------------------------------------------------
@@ -708,10 +866,36 @@ function checkCrossReferences(data: GameData): void {
     }
   }
 
+  const battleTriggers = new Set<string>(BATTLE_RELIC_TRIGGERS);
   for (const relic of data.relics.values()) {
     for (const [index, hook] of relic.hooks.entries()) {
+      const hookPath = `relics[${relic.id}].hooks[${index}]`;
+
+      // A hook that fires inside a battle can only ask questions a battle can
+      // answer. Gold and round number are run state and never cross into
+      // `src/core/battle`, so a relic asking for them there would silently
+      // never fire.
+      if (battleTriggers.has(hook.on)) {
+        issues.check(
+          hook.condition.kind === 'always' || hook.condition.kind === 'tagCountAtLeast',
+          `${hookPath}.condition.kind`,
+          `trigger ${JSON.stringify(hook.on)} fires inside a battle, which cannot evaluate ${JSON.stringify(hook.condition.kind)} — use "always" or "tagCountAtLeast"`,
+        );
+        issues.check(
+          hook.actions.every((action) => action.kind === 'applyEffect'),
+          `${hookPath}.actions`,
+          `trigger ${JSON.stringify(hook.on)} fires inside a battle, where only "applyEffect" actions have any meaning`,
+        );
+      } else {
+        issues.check(
+          hook.actions.every((action) => action.kind !== 'applyEffect'),
+          `${hookPath}.actions`,
+          `trigger ${JSON.stringify(hook.on)} fires outside a battle, where "applyEffect" has nothing to apply to`,
+        );
+      }
+
       for (const action of hook.actions) {
-        const path = `relics[${relic.id}].hooks[${index}]`;
+        const path = hookPath;
         if (action.kind === 'grantUnit' && !units.has(action.unitId)) {
           issues.add(path, `grants unknown unit ${JSON.stringify(action.unitId)}`);
         }
@@ -752,7 +936,75 @@ function checkCrossReferences(data: GameData): void {
     issues.add('units', `merge graph contains a cycle: ${cycle.join(' -> ')}`);
   }
 
+  checkRunReferences(data, issues);
   issues.throwIfAny();
+}
+
+/**
+ * Ties `run.json` to the rest of the content.
+ *
+ * The run configuration is the one file that says how many rounds there are, so
+ * everything else has to line up with it: an encounter per round, the boss flags
+ * matching the boss rounds, and a shop-odds row per round. A missing round 9
+ * would otherwise surface as a crash nine rounds into a playthrough.
+ */
+function checkRunReferences(data: GameData, issues: IssueCollector): void {
+  const { rules, shopTierOdds, rarityWeights } = data.run;
+  const bossRounds = new Set(rules.bossRounds);
+
+  const byRound = new Map<number, EncounterDef[]>();
+  for (const encounter of data.encounters) {
+    const list = byRound.get(encounter.round) ?? [];
+    list.push(encounter);
+    byRound.set(encounter.round, list);
+  }
+
+  for (let round = 1; round <= rules.rounds; round += 1) {
+    const encounters = byRound.get(round) ?? [];
+    if (encounters.length === 0) {
+      issues.add('encounters', `no encounter for round ${round} of ${rules.rounds}`);
+      continue;
+    }
+    for (const encounter of encounters) {
+      issues.check(
+        encounter.boss === bossRounds.has(round),
+        `encounters[${encounter.id}].boss`,
+        bossRounds.has(round)
+          ? `round ${round} is a boss round in run.json, so boss must be true`
+          : `round ${round} is not a boss round in run.json, so boss must be false`,
+      );
+    }
+    issues.check(
+      shopTierOdds.some((row) => row.round === round),
+      'run.shopTierOdds',
+      `no shop odds row for round ${round}`,
+    );
+  }
+
+  for (const encounter of data.encounters) {
+    issues.check(
+      encounter.round <= rules.rounds,
+      `encounters[${encounter.id}].round`,
+      `round ${encounter.round} is past the last round (${rules.rounds})`,
+    );
+  }
+
+  const seenRarities = new Set<string>();
+  for (const entry of rarityWeights) {
+    issues.check(
+      !seenRarities.has(entry.rarity),
+      'run.rarityWeights',
+      `rarity ${JSON.stringify(entry.rarity)} is weighted twice`,
+    );
+    seenRarities.add(entry.rarity);
+  }
+  for (const relic of data.relics.values()) {
+    issues.check(
+      seenRarities.has(relic.rarity),
+      `relics[${relic.id}].rarity`,
+      `rarity ${JSON.stringify(relic.rarity)} has no weight in run.rarityWeights, so the relic can never be offered`,
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -766,6 +1018,7 @@ export interface RawContent {
   readonly synergies: unknown;
   readonly relics: unknown;
   readonly encounters: unknown;
+  readonly run: unknown;
 }
 
 /** Unwraps a `{ version, <key>: [...] }` document. */
@@ -789,6 +1042,7 @@ export function loadGameData(raw: RawContent): GameData {
   const synergies = unwrap(raw.synergies, 'synergies');
   const relics = unwrap(raw.relics, 'relics');
   const encounters = unwrap(raw.encounters, 'encounters');
+  const runVersion = runConfigVersion(raw.run);
 
   const versions = [
     units.version,
@@ -796,10 +1050,11 @@ export function loadGameData(raw: RawContent): GameData {
     synergies.version,
     relics.version,
     encounters.version,
+    runVersion,
   ];
   if (new Set(versions).size !== 1) {
     throw new DataValidationError([
-      `content: files disagree on version (units=${units.version}, abilities=${abilities.version}, synergies=${synergies.version}, relics=${relics.version}, encounters=${encounters.version})`,
+      `content: files disagree on version (units=${units.version}, abilities=${abilities.version}, synergies=${synergies.version}, relics=${relics.version}, encounters=${encounters.version}, run=${runVersion})`,
     ]);
   }
 
@@ -818,6 +1073,7 @@ export function loadGameData(raw: RawContent): GameData {
     encounters: validateEach(encounters.items, 'encounters', parseEncounter).sort(
       (a, b) => a.round - b.round,
     ),
+    run: parseRunConfig(raw.run),
   };
 
   checkCrossReferences(data);
@@ -831,6 +1087,7 @@ export const bundledContent: RawContent = {
   synergies: synergiesJson,
   relics: relicsJson,
   encounters: encountersJson,
+  run: runJson,
 };
 
 let cached: GameData | null = null;

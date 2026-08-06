@@ -30,7 +30,7 @@ import type { Hitstop } from '../effects/Hitstop';
 import type { Layout } from '../layout';
 import { placeCell } from '../layout';
 import type { ParticleSystem } from '../particles';
-import type { MergeOpportunity, Slot } from '../prep/BoardComposition';
+import type { Cell, MergeOpportunity } from '../../core/run/index';
 import { UnitCard } from '../prep/UnitCard';
 import type { TextureRegistry } from '../textures';
 import { tuning } from '../tuning';
@@ -54,7 +54,7 @@ export interface MergeStageDeps {
 
 /** Something the sequence can move around: a unit already on the board. */
 export interface MergeSubject {
-  readonly slot: Slot;
+  readonly cell: Cell;
   readonly node: Container;
 }
 
@@ -99,7 +99,7 @@ export class MergeSequence {
    * the scene apply it.
    */
   landingProgress: number | null = null;
-  landingSlot: Slot | null = null;
+  landingCell: Cell | null = null;
 
   constructor(private readonly deps: MergeStageDeps) {}
 
@@ -122,7 +122,7 @@ export class MergeSequence {
     this.running = true;
 
     const layout = this.deps.getLayout();
-    const destination = opportunity.slots[0];
+    const destination = opportunity.cells[0];
     if (destination === undefined) {
       this.running = false;
       return;
@@ -316,10 +316,10 @@ export class MergeSequence {
   /** (e) The winner lands, overshooting its final size and settling. */
   private land(
     chosen: UnitDef,
-    slot: Slot,
+    destination: Cell,
     x: number,
     y: number,
-    cell: number,
+    cellSize: number,
     onResolved: (chosen: UnitDef) => void,
   ): void {
     const { particles, atlas } = this.deps;
@@ -334,13 +334,13 @@ export class MergeSequence {
         lifeMs: tuning.merge.landMs,
         alphaFrom: 0.6,
       },
-      cell,
+      cellSize,
     );
 
     // The board is updated first, so the scene has a view to punch by the time
     // the landing tween starts reporting progress.
     onResolved(chosen);
-    this.landingSlot = slot;
+    this.landingCell = destination;
     this.landingProgress = 0;
 
     this.deps.tweens
@@ -352,7 +352,7 @@ export class MergeSequence {
       })
       .call(() => {
         this.landingProgress = null;
-        this.landingSlot = null;
+        this.landingCell = null;
         this.running = false;
       });
   }
@@ -378,7 +378,7 @@ export class MergeSequence {
     this.dismissChoices();
     this.clearDesaturation();
     this.landingProgress = null;
-    this.landingSlot = null;
+    this.landingCell = null;
     this.running = false;
   }
 

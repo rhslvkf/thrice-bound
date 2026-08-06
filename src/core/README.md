@@ -36,6 +36,8 @@ seed and check the exact outcome.
 - `config.ts` — simulation constants: tick length, battle timeout, mitigation
   caps, the synergy counting rule.
 - `battle/` — the battle engine. Public entry point is `battle/index.ts`.
+- `run/` — the run loop: rounds, shop, merges, rewards, player health, saving.
+  Public entry point is `run/index.ts`.
 
 ## The battle engine
 
@@ -89,3 +91,55 @@ Split so that a balance change means opening one file:
 No pixel coordinates, no interpolation progress, no animation state. A unit is
 on a cell or it is not; the `move` event carries the step duration so the
 renderer can tween between cells at whatever frame rate it likes.
+
+## The run loop
+
+`run/index.ts` is the state machine for one playthrough: twelve rounds of
+shop -> prep -> battle -> reward, wrapped in a pool of lives that a lost fight
+eats into. Every action takes a `RunState` and returns a new one.
+
+### Files
+
+| File           | Owns                                                        |
+| -------------- | ----------------------------------------------------------- |
+| `types.ts`     | `RunState` and the phases. Plain data, JSON round-trippable. |
+| `streams.ts`   | Labelled RNG streams derived from the run seed.              |
+| `board.ts`     | The player's half of the board, and merge opportunities.     |
+| `shop.ts`      | Rolling the shop against the round's tier odds.              |
+| `rewards.ts`   | Weighting the three relics offered after a win.              |
+| `relics.ts`    | Run-phase relic hooks: gold, rerolls, granted units.         |
+| `run.ts`       | The state machine and every legal action.                    |
+| `serialize.ts` | Turning a run into a string and validating one back.         |
+
+### Rules worth knowing
+
+- **A run carries a seed, not an RNG state.** Every roll derives its own stream
+  from the seed plus a label naming what is rolled — `shop:5:2` is the third
+  shop of round 5. So round 9's shop is a function of the seed alone, no matter
+  what happened in rounds 1 to 8, which is what makes a shared seed mean
+  something. It also makes save/resume free: there is no stream position to
+  preserve.
+- **Actions do not throw for ordinary refusals.** A full board or an empty purse
+  comes back as a `RunRefusal` with a reason a UI can show. Throwing is reserved
+  for a caller doing something incoherent, like resolving a battle it never
+  started.
+- **A loss costs one life per surviving enemy.** The closer the fight, the
+  cheaper it is to lose. A draw is scored as a loss — the board was not cleared.
+- **Merges never fire automatically.** Three copies light up the option; the
+  player chooses the direction. That choice is the game.
+- **A save that fails validation is rejected, not repaired.** A half-plausible
+  run fails later and more confusingly than starting over does.
+
+### Relics
+
+Split across the two halves of core, by trigger:
+
+- `battle/relics.ts` handles `onBattleStart`, `onAllyDamaged` and `onUnitDeath`
+  — everything that happens inside a fight, expressed with the same `Effect`
+  vocabulary abilities and synergies use.
+- `run/relics.ts` handles the rest — gold, rerolls, granted units, shop odds.
+
+The content loader enforces the split: a hook on a battle trigger may only use
+conditions a battle can answer and actions a battle can apply, and vice versa.
+A battle with no relics is bit-identical to one from before relics existed,
+which is what keeps the balance simulator's baselines valid.

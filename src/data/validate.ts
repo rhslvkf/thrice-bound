@@ -69,6 +69,13 @@ export function asString(value: unknown, path: string): string {
   return value;
 }
 
+export function asBoolean(value: unknown, path: string): boolean {
+  if (typeof value !== 'boolean') {
+    fail(path, `expected a boolean, got ${describe(value)}`);
+  }
+  return value;
+}
+
 export interface NumberBounds {
   readonly min?: number;
   readonly max?: number;

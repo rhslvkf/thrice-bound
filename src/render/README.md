@@ -15,6 +15,12 @@ anything get drawn. By the time the first frame appears the battle is over, so
 playback speed, skipping to the end, a dropped frame or a mid-fight resize
 cannot change the outcome — there is nothing left to change.
 
+The same rule covers the run around the fight. `RunScene` holds a `RunState`
+from `src/core/run` and nothing else: a purchase, a merge, a reroll and a reward
+all go out as a run action and come back as a new state or a refusal, which is
+shown to the player rather than worked around. The renderer knows what a shop
+costs only because core told it.
+
 That is also why the headless simulator and the game always agree: they run the
 same code and the renderer is not part of it.
 
@@ -39,6 +45,8 @@ same code and the renderer is not part of it.
 | `camera.ts` | Fixed framing plus shake. |
 | `color.ts` | Colour blending. |
 | `tween.ts` | Easings, chaining, delay. Pooled. The whole animation system. |
+| `run/RunHud.ts` | Round, lives, gold, relics. Read-only. |
+| `run/RewardPanel.ts` | The three relics offered after a win. |
 | `particles.ts` | Fixed pool of 500 sprites. Bursts and rings. |
 | `tuning.ts` | Every timing and intensity, live-mutable. |
 | `replay/BattleReplayer.ts` | Walks the event log along a timeline. |
@@ -46,9 +54,8 @@ same code and the renderer is not part of it.
 | `units/UnitPool.ts` | Recycles views across spawns and deaths. |
 | `effects/DamageNumbers.ts` | Pooled popups, composed from atlas digits. |
 | `effects/Hitstop.ts` | Freezes scaled time; real time keeps counting. |
-| `prep/BoardComposition.ts` | Board contents as plain data. No PixiJS. |
 | `prep/UnitCard.ts` | The card: tray slot, drag ghost, merge choice. |
-| `prep/PrepController.ts` | Tray, drag lifecycle, cell highlighting, buttons. |
+| `prep/PrepController.ts` | Shop row, drag lifecycle, cell highlighting, buttons. |
 | `merge/MergeSequence.ts` | The five-stage merge choreography. |
 | `dev/TuningPanel.ts` | Slider overlay. Dev builds only. |
 | `scenes/` | The scene state machine and the four scenes. |

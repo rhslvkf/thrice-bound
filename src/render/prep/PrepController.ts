@@ -1,21 +1,35 @@
 /**
- * Placement.
+ * The shop and the board, before the fight.
  *
- * Owns the tray of cards, the units already on the board, dragging between the
- * two, and the merge button. Pointer events are used throughout rather than
- * mouse or touch events, so a finger and a cursor take exactly the same path
- * through this file.
+ * One controller for both, because they are one gesture: a card is bought by
+ * dragging it onto a cell, and a unit is repositioned by dragging it to
+ * another. Splitting the shop out would split a single drag lifecycle across
+ * two files.
  *
- * A drag is resolved by *where it was dropped*, never by where it started.
- * That is what lets one gesture mean three things — place into an empty cell,
- * swap two occupied ones, or fail and spring home — without three code paths
- * for picking things up.
+ * Pointer events throughout rather than mouse or touch events, so a finger and
+ * a cursor take exactly the same path. A drag is resolved by *where it was
+ * dropped*, never by where it started — that is what lets one gesture mean four
+ * things (buy into an empty cell, swap two occupied ones, sell, or fail and
+ * spring home) without four ways to pick something up.
+ *
+ * This file decides nothing. Every action goes out through {@link PrepCallbacks}
+ * to the scene, which asks `src/core/run` and gets back a new state or a
+ * refusal. The controller then re-reads that state. It never edits a board.
  */
 
 import { Container, Graphics, Text } from 'pixi.js';
 import type { FederatedPointerEvent } from 'pixi.js';
 import type { GameData, UnitDef } from '../../data/schema';
 import { BOARD } from '../../data/schema';
+import {
+  isPlayerCell,
+  mergeOpportunities,
+  priceOf,
+  rerollCost,
+  sellValue,
+  unitAt,
+} from '../../core/run/index';
+import type { Cell, MergeOpportunity, RunState } from '../../core/run/index';
 import type { Atlas } from '../atlas';
 import { COLORS } from '../config';
 import { cellFaceSize, placeCell } from '../layout';
@@ -24,74 +38,136 @@ import type { TextureRegistry } from '../textures';
 import { tuning } from '../tuning';
 import { Easings } from '../tween';
 import type { TweenManager } from '../tween';
-import { BoardComposition } from './BoardComposition';
-import type { MergeOpportunity, Slot } from './BoardComposition';
 import { UnitCard } from './UnitCard';
 
-/** Tray geometry, as fractions of a cell. */
-const TRAY = {
+/** Shop row geometry, as fractions of a cell. */
+const SHOP = {
   cardWidthRatio: 0.92,
   gapRatio: 0.16,
-  /** Distance below the board to the tray's centre line, in cells. */
-  offsetRatio: 1.62,
+  /** Distance below the board to the row's centre line, in cells. */
+  offsetRatio: 1.66,
+  priceRatio: 0.15,
+  priceOffsetRatio: 0.62,
+  lockRatio: 0.13,
+  lockOffsetRatio: -0.56,
 } as const;
 
 /** Button geometry, in cell fractions. */
 const BUTTON = {
-  widthRatio: 2.4,
-  heightRatio: 0.56,
-  cornerRatio: 0.16,
-  textRatio: 0.19,
+  widthRatio: 1.9,
+  heightRatio: 0.5,
+  cornerRatio: 0.14,
+  textRatio: 0.17,
   /** Distance below the board to the button row's centre line, in cells. */
-  gapRatio: 0.48,
+  gapRatio: 0.46,
+  /** Horizontal spacing between adjacent buttons, in cells. */
+  spacingRatio: 0.16,
 } as const;
 
-/** How many units the tray offers. No shop economy exists yet to size it. */
-const TRAY_SIZE = 5;
-
-interface TrayEntry {
+interface ShopEntry {
   readonly card: UnitCard;
+  readonly price: Text;
+  readonly lock: Graphics;
   def: UnitDef | null;
+  affordable: boolean;
 }
 
 interface DragState {
   readonly origin: { x: number; y: number };
-  readonly source: { kind: 'tray'; index: number } | { kind: 'board'; slot: Slot };
+  readonly source: { kind: 'shop'; index: number } | { kind: 'board'; cell: Cell };
   readonly def: UnitDef;
-  readonly node: Container;
   pointerId: number;
 }
 
 export interface PrepCallbacks {
-  /** A merge was requested. The scene runs the sequence. */
+  /** Buy a shop slot. `target` is the cell it was dropped on, if any. */
+  readonly onBuy: (slotIndex: number, target: Cell | null) => void;
+  readonly onMove: (from: Cell, to: Cell) => void;
+  readonly onSell: (cell: Cell) => void;
+  readonly onToggleLock: (slotIndex: number) => void;
+  readonly onReroll: () => void;
   readonly onMerge: (opportunity: MergeOpportunity) => void;
-  /** The player is done placing. */
   readonly onFight: () => void;
-  /** The board changed, so the scene should rebuild its unit views. */
-  readonly onBoardChanged: () => void;
+}
+
+/** A simple pill button with a label. */
+class PillButton {
+  readonly root = new Container();
+  private readonly background = new Graphics();
+  private readonly label: Text;
+
+  constructor(text: string, accent: number, onPress: () => void) {
+    this.label = new Text({
+      text,
+      style: { fill: COLORS.text, fontSize: 16, fontFamily: 'system-ui', letterSpacing: 2 },
+    });
+    this.label.anchor.set(0.5);
+    this.root.addChild(this.background, this.label);
+    this.root.eventMode = 'static';
+    this.root.cursor = 'pointer';
+    this.root.on('pointerdown', (event: FederatedPointerEvent) => {
+      event.stopPropagation();
+      onPress();
+    });
+    this.accent = accent;
+  }
+
+  private accent: number;
+  private enabled = true;
+
+  setText(text: string): void {
+    this.label.text = text;
+  }
+
+  setEnabled(enabled: boolean): void {
+    this.enabled = enabled;
+    this.root.alpha = enabled ? 1 : 0.4;
+    this.root.eventMode = enabled ? 'static' : 'none';
+    this.root.cursor = enabled ? 'pointer' : 'default';
+  }
+
+  get isEnabled(): boolean {
+    return this.enabled;
+  }
+
+  resize(cell: number): void {
+    const width = cell * BUTTON.widthRatio;
+    const height = cell * BUTTON.heightRatio;
+    this.label.style.fontSize = cell * BUTTON.textRatio;
+    this.background.clear();
+    this.background
+      .roundRect(-width / 2, -height / 2, width, height, cell * BUTTON.cornerRatio)
+      .fill({ color: COLORS.buttonFill })
+      .stroke({ width: Math.max(1.5, cell * 0.02), color: this.accent, alpha: 0.9 });
+  }
+
+  get width(): number {
+    return this.background.width;
+  }
 }
 
 export class PrepController {
   readonly root = new Container();
 
-  private readonly trayLayer = new Container();
+  private readonly shopLayer = new Container();
   private readonly overlayLayer = new Container();
   private readonly dragLayer = new Container();
   private readonly highlight = new Graphics();
+  private readonly sellZone = new Graphics();
+  private readonly sellLabel: Text;
 
-  private readonly tray: TrayEntry[] = [];
-  private readonly mergeButton: Container;
-  private readonly mergeLabel: Text;
-  private readonly mergeBackground = new Graphics();
-  private readonly fightButton: Container;
-  private readonly fightLabel: Text;
-  private readonly fightBackground = new Graphics();
+  private readonly shop: ShopEntry[] = [];
+  private readonly mergeButton: PillButton;
+  private readonly fightButton: PillButton;
+  private readonly rerollButton: PillButton;
 
   private readonly ghost: UnitCard;
   private drag: DragState | null = null;
-  private hovered: Slot | null = null;
+  private hovered: Cell | null = null;
+  private overSell = false;
   private layout: Layout;
   private opportunities: MergeOpportunity[] = [];
+  private state: RunState | null = null;
   private enabled = false;
 
   constructor(
@@ -99,52 +175,56 @@ export class PrepController {
     atlas: Atlas,
     private readonly textures: TextureRegistry,
     private readonly tweens: TweenManager,
-    readonly board: BoardComposition,
     private readonly callbacks: PrepCallbacks,
     layout: Layout,
   ) {
     this.layout = layout;
 
-    for (let i = 0; i < TRAY_SIZE; i += 1) {
+    for (let i = 0; i < data.run.rules.shopSlots; i += 1) {
       const card = new UnitCard(atlas);
       card.root.eventMode = 'static';
       card.root.cursor = 'grab';
       const index = i;
       card.root.on('pointerdown', (event: FederatedPointerEvent) =>
-        this.beginTrayDrag(index, event),
+        this.beginShopDrag(index, event),
       );
-      this.trayLayer.addChild(card.root);
-      this.tray.push({ card, def: null });
+
+      const price = new Text({
+        text: '',
+        style: { fill: COLORS.gold, fontSize: 13, fontFamily: 'system-ui', fontWeight: 'bold' },
+      });
+      price.anchor.set(0.5);
+
+      // The lock is a separate hit target on the card's top edge: locking and
+      // dragging are different intents, and a long-press to disambiguate them
+      // would be a worse answer than a second button.
+      const lock = new Graphics();
+      lock.eventMode = 'static';
+      lock.cursor = 'pointer';
+      lock.on('pointerdown', (event: FederatedPointerEvent) => {
+        event.stopPropagation();
+        if (this.enabled) this.callbacks.onToggleLock(index);
+      });
+
+      this.shopLayer.addChild(card.root, price, lock);
+      this.shop.push({ card, price, lock, def: null, affordable: true });
     }
 
-    this.mergeLabel = new Text({
-      text: 'MERGE',
-      style: { fill: COLORS.buttonAccent, fontSize: 16, fontFamily: 'system-ui', letterSpacing: 2 },
-    });
-    this.mergeLabel.anchor.set(0.5);
-    this.mergeButton = new Container();
-    this.mergeButton.addChild(this.mergeBackground, this.mergeLabel);
-    this.mergeButton.eventMode = 'static';
-    this.mergeButton.cursor = 'pointer';
-    this.mergeButton.visible = false;
-    this.mergeButton.on('pointerdown', (event: FederatedPointerEvent) => {
-      event.stopPropagation();
-      this.requestMerge();
-    });
-
-    this.fightLabel = new Text({
-      text: 'FIGHT',
-      style: { fill: COLORS.text, fontSize: 16, fontFamily: 'system-ui', letterSpacing: 2 },
-    });
-    this.fightLabel.anchor.set(0.5);
-    this.fightButton = new Container();
-    this.fightButton.addChild(this.fightBackground, this.fightLabel);
-    this.fightButton.eventMode = 'static';
-    this.fightButton.cursor = 'pointer';
-    this.fightButton.on('pointerdown', (event: FederatedPointerEvent) => {
-      event.stopPropagation();
+    this.mergeButton = new PillButton('MERGE', COLORS.buttonAccent, () => this.requestMerge());
+    this.fightButton = new PillButton('FIGHT', COLORS.cardBorder, () => {
       if (this.enabled) this.callbacks.onFight();
     });
+    this.rerollButton = new PillButton('REROLL', COLORS.cardBorder, () => {
+      if (this.enabled) this.callbacks.onReroll();
+    });
+    this.mergeButton.root.visible = false;
+
+    this.sellLabel = new Text({
+      text: '',
+      style: { fill: COLORS.sellZone, fontSize: 14, fontFamily: 'system-ui', letterSpacing: 2 },
+    });
+    this.sellLabel.anchor.set(0.5);
+    this.sellLabel.visible = false;
 
     this.ghost = new UnitCard(atlas);
     this.ghost.root.visible = false;
@@ -152,33 +232,60 @@ export class PrepController {
     this.dragLayer.addChild(this.ghost.root);
     this.dragLayer.eventMode = 'none';
 
-    this.overlayLayer.addChild(this.mergeButton, this.fightButton);
-    this.root.addChild(this.highlight, this.trayLayer, this.overlayLayer, this.dragLayer);
-  }
-
-  /** Fills every slot. Used when the phase starts. */
-  refillTray(pick: () => UnitDef): void {
-    for (const entry of this.tray) this.fill(entry, pick);
+    this.overlayLayer.addChild(
+      this.mergeButton.root,
+      this.fightButton.root,
+      this.rerollButton.root,
+    );
+    this.root.addChild(
+      this.highlight,
+      this.sellZone,
+      this.sellLabel,
+      this.shopLayer,
+      this.overlayLayer,
+      this.dragLayer,
+    );
   }
 
   /**
-   * Refills whatever has been taken.
+   * Re-reads run state.
    *
-   * Standing in for a shop: without a restock the tray runs dry after five
-   * placements and the board can never reach three of a kind, which is the
-   * one thing the prep phase exists to let you do.
+   * The single entry point for "something changed". Called after every accepted
+   * action rather than per frame, so text is re-rasterised only when its value
+   * actually moved.
    */
-  refillEmpty(pick: () => UnitDef): void {
-    for (const entry of this.tray) {
-      if (entry.def === null) this.fill(entry, pick);
-    }
-  }
+  sync(state: RunState): void {
+    this.state = state;
 
-  private fill(entry: TrayEntry, pick: () => UnitDef): void {
-    entry.def = pick();
-    entry.card.bind(entry.def, this.textures.resolve(entry.def), COLORS.team.player);
-    entry.card.root.visible = true;
-    entry.card.root.alpha = 1;
+    state.shop.forEach((slot, index) => {
+      const entry = this.shop[index];
+      if (entry === undefined) return;
+
+      const def = slot.unitId === null ? undefined : this.data.units.get(slot.unitId);
+      entry.def = def ?? null;
+      entry.card.root.visible = def !== undefined;
+      entry.price.visible = def !== undefined;
+      entry.lock.visible = def !== undefined;
+
+      if (def === undefined) return;
+      const cost = priceOf(this.data, def.id);
+      entry.affordable = state.gold >= cost;
+      entry.card.bind(def, this.textures.resolve(def), COLORS.team.player);
+      // Unaffordable cards stay visible and dim rather than disappearing: what
+      // is on the shelf is information even when the purse cannot reach it.
+      entry.card.root.alpha = entry.affordable ? 1 : 0.42;
+      entry.card.root.cursor = entry.affordable ? 'grab' : 'not-allowed';
+      entry.price.text = String(cost);
+      entry.price.style.fill = entry.affordable ? COLORS.gold : COLORS.textDim;
+    });
+
+    const cost = rerollCost(this.data, state);
+    this.rerollButton.setText(cost === 0 ? 'REROLL · FREE' : `REROLL · ${cost}`);
+    this.rerollButton.setEnabled(state.phase === 'shop' && (cost === 0 || state.gold >= cost));
+    this.fightButton.setEnabled(state.board.length > 0);
+
+    this.refreshMerges();
+    this.resize(this.layout);
   }
 
   setEnabled(enabled: boolean): void {
@@ -189,40 +296,66 @@ export class PrepController {
 
   /** Recomputes which merges are available and shows or hides the button. */
   refreshMerges(): void {
-    this.opportunities = this.board.mergeOpportunities();
+    const state = this.state;
+    this.opportunities = state === null ? [] : mergeOpportunities(this.data, state.board);
     const first = this.opportunities[0];
-    this.mergeButton.visible = first !== undefined;
-    if (first !== undefined) {
-      this.mergeLabel.text = `MERGE ${first.name.toUpperCase()}`;
-      this.drawButtons();
-    }
+    this.mergeButton.root.visible = first !== undefined;
+    if (first !== undefined) this.mergeButton.setText(`MERGE ${first.name.toUpperCase()}`);
   }
 
   resize(layout: Layout): void {
     this.layout = layout;
     const cell = layout.cellSize;
-    const cardWidth = cell * TRAY.cardWidthRatio;
-    const gap = cell * TRAY.gapRatio;
-    const span = this.tray.length * cardWidth + (this.tray.length - 1) * gap;
-    const y = layout.board.y + layout.board.height + cell * TRAY.offsetRatio;
+    const cardWidth = cell * SHOP.cardWidthRatio;
+    const gap = cell * SHOP.gapRatio;
+    const count = this.shop.length;
+    const span = count * cardWidth + (count - 1) * gap;
+    const y = layout.board.y + layout.board.height + cell * SHOP.offsetRatio;
 
-    this.tray.forEach((entry, index) => {
+    this.shop.forEach((entry, index) => {
+      const x = layout.width / 2 - span / 2 + cardWidth / 2 + index * (cardWidth + gap);
       entry.card.setSize(cardWidth);
-      entry.card.root.position.set(
-        layout.width / 2 - span / 2 + cardWidth / 2 + index * (cardWidth + gap),
-        y,
-      );
+      entry.card.root.position.set(x, y);
+
+      const height = entry.card.size.height;
+      entry.price.style.fontSize = cell * SHOP.priceRatio;
+      entry.price.position.set(x, y + height * SHOP.priceOffsetRatio);
+
+      const lockSize = cell * SHOP.lockRatio;
+      const lockY = y + height * SHOP.lockOffsetRatio;
+      this.drawLock(entry, x, lockY, lockSize, index);
     });
 
     this.ghost.setSize(cardWidth);
 
     const buttonY = layout.board.y + layout.board.height + cell * BUTTON.gapRatio;
-    const buttonWidth = cell * BUTTON.widthRatio;
-    this.mergeButton.position.set(layout.width / 2 - buttonWidth / 2 - cell * 0.2, buttonY);
-    this.fightButton.position.set(layout.width / 2 + buttonWidth / 2 + cell * 0.2, buttonY);
-    this.mergeLabel.style.fontSize = cell * BUTTON.textRatio;
-    this.fightLabel.style.fontSize = cell * BUTTON.textRatio;
-    this.drawButtons();
+    const step = cell * (BUTTON.widthRatio + BUTTON.spacingRatio);
+    for (const button of [this.mergeButton, this.fightButton, this.rerollButton]) {
+      button.resize(cell);
+    }
+    // Merge only appears when it is possible, so the row is centred on whatever
+    // is actually showing rather than leaving a hole where it would be.
+    const visible = [this.rerollButton, this.mergeButton, this.fightButton].filter(
+      (button) => button.root.visible,
+    );
+    visible.forEach((button, index) => {
+      button.root.position.set(
+        layout.width / 2 - ((visible.length - 1) * step) / 2 + index * step,
+        buttonY,
+      );
+    });
+
+    this.drawSellZone();
+  }
+
+  private drawLock(entry: ShopEntry, x: number, y: number, size: number, index: number): void {
+    const locked = this.state?.shop[index]?.locked === true;
+    entry.lock.clear();
+    entry.lock.position.set(x, y);
+    entry.lock
+      .roundRect(-size / 2, -size / 2, size, size, size * 0.25)
+      .fill({ color: locked ? COLORS.locked : COLORS.cardFill })
+      .stroke({ width: Math.max(1, size * 0.12), color: locked ? COLORS.locked : COLORS.cardBorder });
   }
 
   // -------------------------------------------------------------------------
@@ -230,29 +363,26 @@ export class PrepController {
   // -------------------------------------------------------------------------
 
   /** Starts a drag from a board unit. Called by the scene, which owns the views. */
-  beginBoardDrag(slot: Slot, event: FederatedPointerEvent): void {
-    if (!this.enabled || this.drag !== null) return;
-    const unitId = this.board.at(slot.col, slot.row);
+  beginBoardDrag(cell: Cell, event: FederatedPointerEvent): void {
+    const state = this.state;
+    if (!this.enabled || this.drag !== null || state === null) return;
+
+    const unitId = unitAt(state.board, cell.col, cell.row);
     if (unitId === null) return;
     const def = this.data.units.get(unitId);
     if (def === undefined) return;
 
-    const placement = placeCell(this.layout, slot.col, slot.row);
-    this.startDrag(
-      { kind: 'board', slot },
-      def,
-      { x: placement.x, y: placement.y },
-      event,
-    );
+    const placement = placeCell(this.layout, cell.col, cell.row);
+    this.startDrag({ kind: 'board', cell }, def, { x: placement.x, y: placement.y }, event);
   }
 
-  private beginTrayDrag(index: number, event: FederatedPointerEvent): void {
+  private beginShopDrag(index: number, event: FederatedPointerEvent): void {
     if (!this.enabled || this.drag !== null) return;
-    const entry = this.tray[index];
-    if (entry?.def == null) return;
+    const entry = this.shop[index];
+    if (entry?.def == null || !entry.affordable) return;
 
     this.startDrag(
-      { kind: 'tray', index },
+      { kind: 'shop', index },
       entry.def,
       { x: entry.card.root.position.x, y: entry.card.root.position.y },
       event,
@@ -272,7 +402,7 @@ export class PrepController {
     this.ghost.root.position.set(origin.x, origin.y);
     this.ghost.root.scale.set(1);
 
-    this.drag = { origin, source, def, node: this.ghost.root, pointerId: event.pointerId };
+    this.drag = { origin, source, def, pointerId: event.pointerId };
 
     // The lift is what tells a finger the pick-up registered, on a screen with
     // no cursor to change.
@@ -291,7 +421,9 @@ export class PrepController {
     if (this.drag === null) return;
     this.ghost.root.position.set(x, y);
     this.hovered = this.cellAt(x, y);
+    this.overSell = this.drag.source.kind === 'board' && this.isOverSellZone(x, y);
     this.drawHighlight();
+    this.drawSellZone();
   }
 
   /** Called by the scene's global pointerup. Resolves the drop. */
@@ -300,16 +432,26 @@ export class PrepController {
     if (drag === null) return;
 
     const target = this.cellAt(x, y);
+    const sold = drag.source.kind === 'board' && this.isOverSellZone(x, y);
     this.hovered = null;
+    this.overSell = false;
     this.highlight.clear();
 
-    if (target !== null && this.isLegalDrop(drag, target)) {
-      // Retired before the board callback runs: the callback restocks empty
-      // tray slots, and this drag's slot is not empty until it is finished.
-      this.finishDrag(drag, true);
-      this.applyDrop(drag, target);
+    if (sold) {
+      this.finishDrag(drag, false);
+      this.callbacks.onSell(drag.source.kind === 'board' ? drag.source.cell : { col: 0, row: 0 });
       return;
     }
+
+    if (target !== null && this.isLegalDrop(drag, target)) {
+      // Retired before the callback runs: the callback re-syncs from a new run
+      // state, and this drag's slot is not free until it is finished.
+      this.finishDrag(drag, true);
+      if (drag.source.kind === 'shop') this.callbacks.onBuy(drag.source.index, target);
+      else this.callbacks.onMove(drag.source.cell, target);
+      return;
+    }
+
     // Illegal or off-board: spring home. Elastic rather than linear, because a
     // rejected drop should feel like the card refusing to stay put.
     this.springBack(drag);
@@ -343,16 +485,14 @@ export class PrepController {
     this.ghost.root.scale.set(1);
     this.drag = null;
     this.hovered = null;
+    this.overSell = false;
     this.highlight.clear();
+    this.drawSellZone();
 
-    if (drag.source.kind === 'tray') {
-      const entry = this.tray[drag.source.index];
+    if (drag.source.kind === 'shop') {
+      const entry = this.shop[drag.source.index];
       if (entry !== undefined) {
-        entry.card.root.alpha = 1;
-        if (consumed) {
-          entry.def = null;
-          entry.card.root.visible = false;
-        }
+        entry.card.root.alpha = consumed ? 1 : entry.affordable ? 1 : 0.42;
       }
     }
   }
@@ -360,29 +500,21 @@ export class PrepController {
   /**
    * Whether a drop is allowed.
    *
-   * Board cells only, player half only. A tray card needs an empty cell; a
+   * Board cells only, player half only. A shop card needs an empty cell; a
    * board unit may land on an occupied one, which swaps them.
    */
-  private isLegalDrop(drag: DragState, target: Slot): boolean {
-    if (!BoardComposition.isPlayerCell(target.col, target.row)) return false;
+  private isLegalDrop(drag: DragState, target: Cell): boolean {
+    if (!isPlayerCell(target.col, target.row)) return false;
+    const state = this.state;
+    if (state === null) return false;
     if (drag.source.kind === 'board') return true;
-    return this.board.at(target.col, target.row) === null;
-  }
-
-  private applyDrop(drag: DragState, target: Slot): void {
-    if (drag.source.kind === 'tray') {
-      this.board.place(target.col, target.row, drag.def.id);
-    } else {
-      this.board.swap(drag.source.slot, target);
-    }
-    this.callbacks.onBoardChanged();
-    this.refreshMerges();
+    return unitAt(state.board, target.col, target.row) === null;
   }
 
   // -------------------------------------------------------------------------
 
   /** The cell under a screen point, or `null` if the point is off the board. */
-  private cellAt(x: number, y: number): Slot | null {
+  private cellAt(x: number, y: number): Cell | null {
     for (let row = 0; row < BOARD.rows; row += 1) {
       const face = cellFaceSize(this.layout, row);
       for (let col = 0; col < BOARD.cols; col += 1) {
@@ -396,6 +528,55 @@ export class PrepController {
       }
     }
     return null;
+  }
+
+  /** The sell strip sits over the shop row, which is dead space during a drag. */
+  private sellBounds(): { x: number; y: number; width: number; height: number } {
+    const cell = this.layout.cellSize;
+    const height = cell * 0.9;
+    return {
+      x: this.layout.safe.x,
+      y: this.layout.board.y + this.layout.board.height + cell * (SHOP.offsetRatio - 0.5),
+      width: this.layout.safe.width,
+      height,
+    };
+  }
+
+  private isOverSellZone(x: number, y: number): boolean {
+    const bounds = this.sellBounds();
+    return (
+      x >= bounds.x &&
+      x <= bounds.x + bounds.width &&
+      y >= bounds.y &&
+      y <= bounds.y + bounds.height
+    );
+  }
+
+  private drawSellZone(): void {
+    const g = this.sellZone;
+    g.clear();
+    const drag = this.drag;
+    const showing = drag !== null && drag.source.kind === 'board';
+    this.sellLabel.visible = showing;
+    if (!showing || drag === null || drag.source.kind !== 'board') return;
+
+    const state = this.state;
+    if (state === null) return;
+    const unitId = unitAt(state.board, drag.source.cell.col, drag.source.cell.row);
+    const refund = unitId === null ? 0 : sellValue(this.data, unitId);
+
+    const bounds = this.sellBounds();
+    g.roundRect(bounds.x, bounds.y, bounds.width, bounds.height, this.layout.cellSize * 0.1)
+      .fill({ color: COLORS.sellZone, alpha: this.overSell ? 0.3 : 0.1 })
+      .stroke({
+        width: Math.max(1.5, this.layout.cellSize * 0.02),
+        color: COLORS.sellZone,
+        alpha: this.overSell ? 1 : 0.5,
+      });
+
+    this.sellLabel.text = `SELL  +${refund}`;
+    this.sellLabel.style.fontSize = this.layout.cellSize * 0.2;
+    this.sellLabel.position.set(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
   }
 
   /**
@@ -414,8 +595,8 @@ export class PrepController {
     for (let row = 0; row < BOARD.rows; row += 1) {
       const face = cellFaceSize(this.layout, row);
       for (let col = 0; col < BOARD.cols; col += 1) {
-        const slot = { col, row };
-        const legal = this.isLegalDrop(drag, slot);
+        const cell = { col, row };
+        const legal = this.isLegalDrop(drag, cell);
         const centre = placeCell(this.layout, col, row);
         const isHovered =
           this.hovered !== null && this.hovered.col === col && this.hovered.row === row;
@@ -449,30 +630,12 @@ export class PrepController {
 
   private requestMerge(): void {
     const opportunity = this.opportunities[0];
-    if (opportunity === undefined) return;
+    if (opportunity === undefined || !this.enabled) return;
     this.callbacks.onMerge(opportunity);
   }
 
-  private drawButtons(): void {
-    const cell = this.layout.cellSize;
-    const width = cell * BUTTON.widthRatio;
-    const height = cell * BUTTON.heightRatio;
-    const corner = cell * BUTTON.cornerRatio;
-
-    for (const [graphics, accent] of [
-      [this.mergeBackground, COLORS.buttonAccent],
-      [this.fightBackground, COLORS.cardBorder],
-    ] as const) {
-      graphics.clear();
-      graphics
-        .roundRect(-width / 2, -height / 2, width, height, corner)
-        .fill({ color: COLORS.buttonFill })
-        .stroke({ width: Math.max(1.5, cell * 0.02), color: accent, alpha: 0.9 });
-    }
-  }
-
   destroy(): void {
-    for (const entry of this.tray) entry.card.destroy();
+    for (const entry of this.shop) entry.card.destroy();
     this.ghost.destroy();
     this.root.destroy({ children: true });
   }

@@ -296,9 +296,22 @@ export const RELIC_TRIGGERS = [
   'onMerge',
   'onShopReroll',
   'onUnitPurchase',
+  /** A player unit took damage. Fires often — gate it with `chance`. */
+  'onAllyDamaged',
   'onUnitDeath',
 ] as const;
 export type RelicTrigger = (typeof RELIC_TRIGGERS)[number];
+
+/**
+ * Triggers the battle engine raises. The rest are the run loop's business, and
+ * a relic that hooks them never reaches `src/core/battle`.
+ */
+export const BATTLE_RELIC_TRIGGERS = [
+  'onBattleStart',
+  'onAllyDamaged',
+  'onUnitDeath',
+] as const satisfies readonly RelicTrigger[];
+export type BattleRelicTrigger = (typeof BATTLE_RELIC_TRIGGERS)[number];
 
 export const RELIC_CONDITION_KINDS = [
   'always',
@@ -365,6 +378,14 @@ export type RelicAction =
 export interface RelicHook {
   readonly on: RelicTrigger;
   readonly condition: RelicCondition;
+  /**
+   * Proc probability in `[0, 1]`, rolled against the injected seeded RNG.
+   *
+   * Exists for the high-frequency triggers: `onAllyDamaged` fires on every hit
+   * a player unit takes, and a relic that always procs there is either
+   * negligible or overwhelming with nothing in between.
+   */
+  readonly chance: number;
   readonly actions: readonly RelicAction[];
 }
 
@@ -395,9 +416,77 @@ export interface EncounterDef {
   /** 1-based round number this encounter belongs to. */
   readonly round: number;
   readonly name: string;
+  /** Marks a milestone fight. The loader checks these match `run.bossRounds`. */
+  readonly boss: boolean;
   readonly placements: readonly EnemyPlacement[];
   readonly goldReward: number;
   readonly artKey: ArtKey;
+}
+
+// ---------------------------------------------------------------------------
+// Run configuration
+// ---------------------------------------------------------------------------
+
+/**
+ * Chance of each tier appearing in one shop slot, for one round.
+ *
+ * Weights, not percentages — the roll normalises them, so a relic that
+ * multiplies one of them does not have to keep the row summing to 100.
+ */
+export interface ShopTierOdds {
+  readonly round: number;
+  readonly tier1: number;
+  readonly tier2: number;
+  readonly tier3: number;
+}
+
+/** How often a rarity is offered as a reward, and when it starts appearing. */
+export interface RarityWeight {
+  readonly rarity: RelicRarity;
+  readonly weight: number;
+  /** Rounds before this are guaranteed not to offer the rarity. */
+  readonly minRound: number;
+}
+
+/** Every number the run loop uses. None of it is hardcoded in `src/core`. */
+export interface RunRules {
+  readonly rounds: number;
+  /** 1-based rounds that are boss fights. Must all be `<= rounds`. */
+  readonly bossRounds: readonly number[];
+  readonly startingLives: number;
+  readonly startingGold: number;
+  /** Income paid at the start of every round, before the per-round bonus. */
+  readonly baseIncome: number;
+  /** Added to income once per round elapsed, so later rounds pay more. */
+  readonly incomePerRound: number;
+  /** Extra gold for winning, on top of the encounter's own reward. */
+  readonly winBonusGold: number;
+  /** One gold of interest per this much banked, capped by `interestCap`. */
+  readonly interestPerGold: number;
+  readonly interestCap: number;
+  readonly rerollCost: number;
+  readonly shopSlots: number;
+  readonly rewardChoices: number;
+  /**
+   * Share of reward slots filled by an unweighted draw.
+   *
+   * Weighting rewards toward what the player already has makes a run cohere;
+   * weighting *every* slot makes it a foregone conclusion. This is the leak
+   * that keeps an off-plan relic reachable.
+   */
+  readonly rewardRandomShare: number;
+  /** Weight multiplier applied per matching tag unit on the board. */
+  readonly rewardTagAffinity: number;
+  /** Refund when selling, as a share of the unit's cost. Rounded down, min 1. */
+  readonly sellRefundShare: number;
+}
+
+/** `run.json`, validated. */
+export interface RunConfig {
+  readonly rules: RunRules;
+  readonly rarityWeights: readonly RarityWeight[];
+  /** One row per round, ascending, covering `1 .. rules.rounds`. */
+  readonly shopTierOdds: readonly ShopTierOdds[];
 }
 
 // ---------------------------------------------------------------------------
@@ -413,4 +502,5 @@ export interface GameData {
   readonly relics: ReadonlyMap<string, RelicDef>;
   /** Ordered ascending by `round`. */
   readonly encounters: readonly EncounterDef[];
+  readonly run: RunConfig;
 }

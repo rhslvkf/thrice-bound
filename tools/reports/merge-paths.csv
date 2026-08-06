@@ -1,41 +1,41 @@
 parent_id,parent_name,parent_tier,option_id,option_name,samples,win_rate,gap_pp,gap_margin_pp,over_limit
-unit.alpha_howler,Alpha Howler,2,unit.primal_avatar,Primal Avatar,300,0.6400,16.33,7.05,yes
-unit.alpha_howler,Alpha Howler,2,unit.verdant_colossus,Verdant Colossus,300,0.8033,16.33,7.05,yes
-unit.blade_dancer,Blade Dancer,2,unit.sovereign_engine,Sovereign Engine,300,0.6800,6.83,7.21,no
-unit.blade_dancer,Blade Dancer,2,unit.titan_of_the_forge,Titan of the Forge,300,0.7483,6.83,7.21,no
-unit.bone_acolyte,Bone Acolyte,1,unit.crypt_weaver,Crypt Weaver,300,0.4533,1.50,7.98,no
-unit.bone_acolyte,Bone Acolyte,1,unit.rot_knight,Rot Knight,300,0.4683,1.50,7.98,no
-unit.bramble_stalker,Bramble Stalker,2,unit.primal_avatar,Primal Avatar,300,0.6033,19.67,7.15,yes
-unit.bramble_stalker,Bramble Stalker,2,unit.verdant_colossus,Verdant Colossus,300,0.8000,19.67,7.15,yes
-unit.crypt_weaver,Crypt Weaver,2,unit.lich_regent,Lich Regent,300,0.6150,2.83,7.73,no
-unit.crypt_weaver,Crypt Weaver,2,unit.void_sovereign,Void Sovereign,300,0.6433,2.83,7.73,no
-unit.dire_pup,Dire Pup,1,unit.alpha_howler,Alpha Howler,300,0.4733,9.17,7.96,yes
-unit.dire_pup,Dire Pup,1,unit.moss_warden,Moss Warden,300,0.5650,9.17,7.96,yes
-unit.ember_magus,Ember Magus,2,unit.archon_of_ash,Archon of Ash,300,0.6883,6.67,7.59,no
-unit.ember_magus,Ember Magus,2,unit.void_sovereign,Void Sovereign,300,0.6217,6.67,7.59,no
-unit.forge_apprentice,Forge Apprentice,1,unit.blade_dancer,Blade Dancer,300,0.4267,4.67,7.95,no
-unit.forge_apprentice,Forge Apprentice,1,unit.gear_artificer,Gear Artificer,300,0.4733,4.67,7.95,no
-unit.gear_artificer,Gear Artificer,2,unit.primal_avatar,Primal Avatar,300,0.5917,14.50,7.47,yes
-unit.gear_artificer,Gear Artificer,2,unit.titan_of_the_forge,Titan of the Forge,300,0.7367,14.50,7.47,yes
-unit.grave_rat,Grave Rat,1,unit.crypt_weaver,Crypt Weaver,300,0.4217,2.17,7.87,no
-unit.grave_rat,Grave Rat,1,unit.plague_hound,Plague Hound,300,0.4000,2.17,7.87,no
-unit.iron_bulwark,Iron Bulwark,2,unit.sovereign_engine,Sovereign Engine,300,0.6283,12.33,7.34,yes
-unit.iron_bulwark,Iron Bulwark,2,unit.titan_of_the_forge,Titan of the Forge,300,0.7517,12.33,7.34,yes
-unit.moss_warden,Moss Warden,2,unit.bone_leviathan,Bone Leviathan,300,0.7567,3.33,6.69,no
-unit.moss_warden,Moss Warden,2,unit.verdant_colossus,Verdant Colossus,300,0.7900,3.33,6.69,no
-unit.plague_hound,Plague Hound,2,unit.bone_leviathan,Bone Leviathan,300,0.7533,18.17,7.43,yes
-unit.plague_hound,Plague Hound,2,unit.lich_regent,Lich Regent,300,0.5717,18.17,7.43,yes
-unit.rot_knight,Rot Knight,2,unit.bone_leviathan,Bone Leviathan,300,0.7633,17.67,7.36,yes
-unit.rot_knight,Rot Knight,2,unit.lich_regent,Lich Regent,300,0.5867,17.67,7.36,yes
-unit.rune_scribe,Rune Scribe,1,unit.sigil_adept,Sigil Adept,300,0.5267,3.83,7.99,no
-unit.rune_scribe,Rune Scribe,1,unit.void_caller,Void Caller,300,0.4883,3.83,7.99,no
-unit.scrap_sentry,Scrap Sentry,1,unit.gear_artificer,Gear Artificer,300,0.4467,8.83,7.97,yes
-unit.scrap_sentry,Scrap Sentry,1,unit.iron_bulwark,Iron Bulwark,300,0.5350,8.83,7.97,yes
-unit.sigil_adept,Sigil Adept,2,unit.archon_of_ash,Archon of Ash,300,0.6867,3.00,7.51,no
-unit.sigil_adept,Sigil Adept,2,unit.sovereign_engine,Sovereign Engine,300,0.6567,3.00,7.51,no
-unit.spark_imp,Spark Imp,1,unit.ember_magus,Ember Magus,300,0.4917,4.33,7.99,no
-unit.spark_imp,Spark Imp,1,unit.sigil_adept,Sigil Adept,300,0.5350,4.33,7.99,no
-unit.thornling,Thornling,1,unit.bramble_stalker,Bramble Stalker,300,0.4017,11.83,7.92,yes
-unit.thornling,Thornling,1,unit.moss_warden,Moss Warden,300,0.5200,11.83,7.92,yes
-unit.void_caller,Void Caller,2,unit.archon_of_ash,Archon of Ash,300,0.6933,10.67,7.63,yes
-unit.void_caller,Void Caller,2,unit.void_sovereign,Void Sovereign,300,0.5867,10.67,7.63,yes
+unit.alpha_howler,Alpha Howler,2,unit.primal_avatar,Primal Avatar,150,0.6067,18.67,10.15,yes
+unit.alpha_howler,Alpha Howler,2,unit.verdant_colossus,Verdant Colossus,150,0.7933,18.67,10.15,yes
+unit.blade_dancer,Blade Dancer,2,unit.sovereign_engine,Sovereign Engine,150,0.6733,5.33,10.35,no
+unit.blade_dancer,Blade Dancer,2,unit.titan_of_the_forge,Titan of the Forge,150,0.7267,5.33,10.35,no
+unit.bone_acolyte,Bone Acolyte,1,unit.crypt_weaver,Crypt Weaver,150,0.4533,1.33,11.28,no
+unit.bone_acolyte,Bone Acolyte,1,unit.rot_knight,Rot Knight,150,0.4667,1.33,11.28,no
+unit.bramble_stalker,Bramble Stalker,2,unit.primal_avatar,Primal Avatar,150,0.6333,18.67,9.86,yes
+unit.bramble_stalker,Bramble Stalker,2,unit.verdant_colossus,Verdant Colossus,150,0.8200,18.67,9.86,yes
+unit.crypt_weaver,Crypt Weaver,2,unit.lich_regent,Lich Regent,150,0.6333,0.67,10.88,no
+unit.crypt_weaver,Crypt Weaver,2,unit.void_sovereign,Void Sovereign,150,0.6400,0.67,10.88,no
+unit.dire_pup,Dire Pup,1,unit.alpha_howler,Alpha Howler,150,0.4467,7.33,11.28,no
+unit.dire_pup,Dire Pup,1,unit.moss_warden,Moss Warden,150,0.5200,7.33,11.28,no
+unit.ember_magus,Ember Magus,2,unit.archon_of_ash,Archon of Ash,150,0.6433,3.67,10.95,no
+unit.ember_magus,Ember Magus,2,unit.void_sovereign,Void Sovereign,150,0.6067,3.67,10.95,no
+unit.forge_apprentice,Forge Apprentice,1,unit.blade_dancer,Blade Dancer,150,0.4467,0.67,11.26,no
+unit.forge_apprentice,Forge Apprentice,1,unit.gear_artificer,Gear Artificer,150,0.4533,0.67,11.26,no
+unit.gear_artificer,Gear Artificer,2,unit.primal_avatar,Primal Avatar,150,0.6333,16.67,10.02,yes
+unit.gear_artificer,Gear Artificer,2,unit.titan_of_the_forge,Titan of the Forge,150,0.8000,16.67,10.02,yes
+unit.grave_rat,Grave Rat,1,unit.crypt_weaver,Crypt Weaver,150,0.3733,2.00,11.00,no
+unit.grave_rat,Grave Rat,1,unit.plague_hound,Plague Hound,150,0.3933,2.00,11.00,no
+unit.iron_bulwark,Iron Bulwark,2,unit.sovereign_engine,Sovereign Engine,150,0.6300,11.67,10.40,yes
+unit.iron_bulwark,Iron Bulwark,2,unit.titan_of_the_forge,Titan of the Forge,150,0.7467,11.67,10.40,yes
+unit.moss_warden,Moss Warden,2,unit.bone_leviathan,Bone Leviathan,150,0.8067,4.00,8.56,no
+unit.moss_warden,Moss Warden,2,unit.verdant_colossus,Verdant Colossus,150,0.8467,4.00,8.56,no
+unit.plague_hound,Plague Hound,2,unit.bone_leviathan,Bone Leviathan,150,0.7600,23.67,10.52,yes
+unit.plague_hound,Plague Hound,2,unit.lich_regent,Lich Regent,150,0.5233,23.67,10.52,yes
+unit.rot_knight,Rot Knight,2,unit.bone_leviathan,Bone Leviathan,150,0.8033,25.67,10.19,yes
+unit.rot_knight,Rot Knight,2,unit.lich_regent,Lich Regent,150,0.5467,25.67,10.19,yes
+unit.rune_scribe,Rune Scribe,1,unit.sigil_adept,Sigil Adept,150,0.4933,3.67,11.29,no
+unit.rune_scribe,Rune Scribe,1,unit.void_caller,Void Caller,150,0.4567,3.67,11.29,no
+unit.scrap_sentry,Scrap Sentry,1,unit.gear_artificer,Gear Artificer,150,0.4867,4.67,11.30,no
+unit.scrap_sentry,Scrap Sentry,1,unit.iron_bulwark,Iron Bulwark,150,0.5333,4.67,11.30,no
+unit.sigil_adept,Sigil Adept,2,unit.archon_of_ash,Archon of Ash,150,0.6867,4.67,10.68,no
+unit.sigil_adept,Sigil Adept,2,unit.sovereign_engine,Sovereign Engine,150,0.6400,4.67,10.68,no
+unit.spark_imp,Spark Imp,1,unit.ember_magus,Ember Magus,150,0.4867,7.33,11.27,no
+unit.spark_imp,Spark Imp,1,unit.sigil_adept,Sigil Adept,150,0.5600,7.33,11.27,no
+unit.thornling,Thornling,1,unit.bramble_stalker,Bramble Stalker,150,0.4400,10.00,11.26,yes
+unit.thornling,Thornling,1,unit.moss_warden,Moss Warden,150,0.5400,10.00,11.26,yes
+unit.void_caller,Void Caller,2,unit.archon_of_ash,Archon of Ash,150,0.6467,13.33,11.07,yes
+unit.void_caller,Void Caller,2,unit.void_sovereign,Void Sovereign,150,0.5133,13.33,11.07,yes

@@ -30,9 +30,15 @@ export const LAYOUT = {
    * merge and fight buttons, the card tray and the hint all live below it, and
    * on a phone they have to sit within thumb reach.
    */
-  boardHeightShare: { portrait: 0.48, landscape: 0.55 },
-  /** Where the board sits vertically inside the safe area, 0 = top. */
-  boardVerticalAnchor: { portrait: 0.16, landscape: 0.12 },
+  boardHeightShare: { portrait: 0.44, landscape: 0.5 },
+  /**
+   * Where the board sits vertically inside the safe area, 0 = top.
+   *
+   * Not zero: the run header sits above the board and the shop row below it,
+   * so the board is pushed off the top edge far enough to leave the header a
+   * line of its own.
+   */
+  boardVerticalAnchor: { portrait: 0.24, landscape: 0.2 },
   /** Aspect at or above which the viewport counts as landscape. */
   landscapeAspect: 1,
   /** Cell size bounds in CSS pixels, so the board is neither tiny nor absurd. */
@@ -108,6 +114,15 @@ export const COLORS = {
   cardBorder: 0x2f394d,
   buttonFill: 0x24304a,
   buttonAccent: 0xf0c46a,
+  /** Run furniture. */
+  gold: 0xf0c46a,
+  lives: 0xe0556b,
+  boss: 0xd4562f,
+  locked: 0x7fc7e8,
+  sellZone: 0xe05a5a,
+  panelFill: 0x11151f,
+  /** Relic rarity, dullest to brightest. */
+  rarity: { common: 0x8b93a5, rare: 0x7fc7e8, legendary: 0xf0a04a },
   /** Text. */
   text: 0xe8ecf4,
   textDim: 0x8b93a5,

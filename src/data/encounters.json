@@ -5,9 +5,18 @@
       "id": "encounter.r1_scurry",
       "round": 1,
       "name": "Scurry in the Dark",
+      "boss": false,
       "placements": [
-        { "unitId": "unit.grave_rat", "col": 1, "row": 1 },
-        { "unitId": "unit.grave_rat", "col": 3, "row": 1 }
+        {
+          "unitId": "unit.grave_rat",
+          "col": 1,
+          "row": 1
+        },
+        {
+          "unitId": "unit.grave_rat",
+          "col": 3,
+          "row": 1
+        }
       ],
       "goldReward": 3,
       "artKey": "encounter/r1_scurry"
@@ -16,10 +25,23 @@
       "id": "encounter.r2_undergrowth",
       "round": 2,
       "name": "Stirring Undergrowth",
+      "boss": false,
       "placements": [
-        { "unitId": "unit.thornling", "col": 1, "row": 1 },
-        { "unitId": "unit.thornling", "col": 3, "row": 1 },
-        { "unitId": "unit.dire_pup", "col": 2, "row": 0 }
+        {
+          "unitId": "unit.thornling",
+          "col": 1,
+          "row": 1
+        },
+        {
+          "unitId": "unit.thornling",
+          "col": 3,
+          "row": 1
+        },
+        {
+          "unitId": "unit.dire_pup",
+          "col": 2,
+          "row": 0
+        }
       ],
       "goldReward": 4,
       "artKey": "encounter/r2_undergrowth"
@@ -28,81 +50,436 @@
       "id": "encounter.r3_scrapyard",
       "round": 3,
       "name": "The Scrapyard Watch",
+      "boss": true,
       "placements": [
-        { "unitId": "unit.scrap_sentry", "col": 1, "row": 1 },
-        { "unitId": "unit.scrap_sentry", "col": 2, "row": 1 },
-        { "unitId": "unit.scrap_sentry", "col": 3, "row": 1 },
-        { "unitId": "unit.spark_imp", "col": 2, "row": 0 }
+        {
+          "unitId": "unit.scrap_sentry",
+          "col": 1,
+          "row": 1
+        },
+        {
+          "unitId": "unit.scrap_sentry",
+          "col": 2,
+          "row": 1
+        },
+        {
+          "unitId": "unit.scrap_sentry",
+          "col": 3,
+          "row": 1
+        },
+        {
+          "unitId": "unit.forge_apprentice",
+          "col": 2,
+          "row": 0
+        }
       ],
-      "goldReward": 5,
+      "goldReward": 6,
       "artKey": "encounter/r3_scrapyard"
     },
     {
       "id": "encounter.r4_ossuary",
       "round": 4,
       "name": "Ossuary Choir",
+      "boss": false,
       "placements": [
-        { "unitId": "unit.grave_rat", "col": 1, "row": 1 },
-        { "unitId": "unit.grave_rat", "col": 3, "row": 1 },
-        { "unitId": "unit.bone_acolyte", "col": 1, "row": 0 },
-        { "unitId": "unit.bone_acolyte", "col": 3, "row": 0 }
+        {
+          "unitId": "unit.grave_rat",
+          "col": 0,
+          "row": 1
+        },
+        {
+          "unitId": "unit.grave_rat",
+          "col": 4,
+          "row": 1
+        },
+        {
+          "unitId": "unit.plague_hound",
+          "col": 2,
+          "row": 1
+        },
+        {
+          "unitId": "unit.bone_acolyte",
+          "col": 1,
+          "row": 0
+        },
+        {
+          "unitId": "unit.bone_acolyte",
+          "col": 3,
+          "row": 0
+        },
+        {
+          "unitId": "unit.crypt_weaver",
+          "col": 2,
+          "row": 0
+        }
       ],
-      "goldReward": 6,
+      "goldReward": 5,
       "artKey": "encounter/r4_ossuary"
     },
     {
       "id": "encounter.r5_bramblewood",
       "round": 5,
       "name": "Bramblewood Hunt",
+      "boss": false,
       "placements": [
-        { "unitId": "unit.bramble_stalker", "col": 2, "row": 1 },
-        { "unitId": "unit.plague_hound", "col": 0, "row": 1 },
-        { "unitId": "unit.plague_hound", "col": 4, "row": 1 },
-        { "unitId": "unit.dire_pup", "col": 2, "row": 0 }
+        {
+          "unitId": "unit.thornling",
+          "col": 0,
+          "row": 1
+        },
+        {
+          "unitId": "unit.bramble_stalker",
+          "col": 2,
+          "row": 1
+        },
+        {
+          "unitId": "unit.thornling",
+          "col": 4,
+          "row": 1
+        },
+        {
+          "unitId": "unit.moss_warden",
+          "col": 1,
+          "row": 0
+        },
+        {
+          "unitId": "unit.alpha_howler",
+          "col": 3,
+          "row": 0
+        },
+        {
+          "unitId": "unit.bramble_stalker",
+          "col": 2,
+          "row": 0
+        }
       ],
-      "goldReward": 7,
+      "goldReward": 6,
       "artKey": "encounter/r5_bramblewood"
     },
     {
       "id": "encounter.r6_foundry",
       "round": 6,
-      "name": "Foundry Vanguard",
+      "name": "Emberfall Foundry",
+      "boss": false,
       "placements": [
-        { "unitId": "unit.iron_bulwark", "col": 1, "row": 1 },
-        { "unitId": "unit.iron_bulwark", "col": 3, "row": 1 },
-        { "unitId": "unit.blade_dancer", "col": 2, "row": 1 },
-        { "unitId": "unit.ember_magus", "col": 2, "row": 0 }
+        {
+          "unitId": "unit.iron_bulwark",
+          "col": 1,
+          "row": 1
+        },
+        {
+          "unitId": "unit.iron_bulwark",
+          "col": 3,
+          "row": 1
+        },
+        {
+          "unitId": "unit.gear_artificer",
+          "col": 2,
+          "row": 1
+        },
+        {
+          "unitId": "unit.ember_magus",
+          "col": 1,
+          "row": 0
+        },
+        {
+          "unitId": "unit.sigil_adept",
+          "col": 3,
+          "row": 0
+        },
+        {
+          "unitId": "unit.blade_dancer",
+          "col": 2,
+          "row": 0
+        }
       ],
-      "goldReward": 8,
+      "goldReward": 6,
       "artKey": "encounter/r6_foundry"
     },
     {
       "id": "encounter.r7_rotcourt",
       "round": 7,
-      "name": "Court of Rot",
+      "name": "The Rotcourt",
+      "boss": true,
       "placements": [
-        { "unitId": "unit.rot_knight", "col": 1, "row": 1 },
-        { "unitId": "unit.moss_warden", "col": 3, "row": 1 },
-        { "unitId": "unit.alpha_howler", "col": 2, "row": 1 },
-        { "unitId": "unit.crypt_weaver", "col": 1, "row": 0 },
-        { "unitId": "unit.crypt_weaver", "col": 3, "row": 0 }
+        {
+          "unitId": "unit.rot_knight",
+          "col": 1,
+          "row": 1
+        },
+        {
+          "unitId": "unit.rot_knight",
+          "col": 3,
+          "row": 1
+        },
+        {
+          "unitId": "unit.plague_hound",
+          "col": 2,
+          "row": 1
+        },
+        {
+          "unitId": "unit.plague_hound",
+          "col": 0,
+          "row": 1
+        },
+        {
+          "unitId": "unit.crypt_weaver",
+          "col": 1,
+          "row": 0
+        },
+        {
+          "unitId": "unit.crypt_weaver",
+          "col": 3,
+          "row": 0
+        },
+        {
+          "unitId": "unit.bone_leviathan",
+          "col": 2,
+          "row": 0
+        }
       ],
       "goldReward": 9,
       "artKey": "encounter/r7_rotcourt"
     },
     {
-      "id": "encounter.r8_thrice_bound",
+      "id": "encounter.r8_gearfall",
       "round": 8,
-      "name": "The Thrice-Bound Throne",
+      "name": "Gearfall Descent",
+      "boss": false,
       "placements": [
-        { "unitId": "unit.verdant_colossus", "col": 1, "row": 1 },
-        { "unitId": "unit.titan_of_the_forge", "col": 3, "row": 1 },
-        { "unitId": "unit.lich_regent", "col": 2, "row": 0 },
-        { "unitId": "unit.sigil_adept", "col": 0, "row": 0 },
-        { "unitId": "unit.void_caller", "col": 4, "row": 0 }
+        {
+          "unitId": "unit.iron_bulwark",
+          "col": 0,
+          "row": 1
+        },
+        {
+          "unitId": "unit.blade_dancer",
+          "col": 1,
+          "row": 1
+        },
+        {
+          "unitId": "unit.blade_dancer",
+          "col": 2,
+          "row": 1
+        },
+        {
+          "unitId": "unit.gear_artificer",
+          "col": 3,
+          "row": 1
+        },
+        {
+          "unitId": "unit.iron_bulwark",
+          "col": 4,
+          "row": 1
+        },
+        {
+          "unitId": "unit.titan_of_the_forge",
+          "col": 1,
+          "row": 0
+        },
+        {
+          "unitId": "unit.gear_artificer",
+          "col": 2,
+          "row": 0
+        },
+        {
+          "unitId": "unit.sovereign_engine",
+          "col": 3,
+          "row": 0
+        }
       ],
-      "goldReward": 12,
-      "artKey": "encounter/r8_thrice_bound"
+      "goldReward": 7,
+      "artKey": "encounter/r8_gearfall"
+    },
+    {
+      "id": "encounter.r9_sundered_sigil",
+      "round": 9,
+      "name": "The Sundered Sigil",
+      "boss": false,
+      "placements": [
+        {
+          "unitId": "unit.sigil_adept",
+          "col": 1,
+          "row": 1
+        },
+        {
+          "unitId": "unit.ember_magus",
+          "col": 2,
+          "row": 1
+        },
+        {
+          "unitId": "unit.sigil_adept",
+          "col": 3,
+          "row": 1
+        },
+        {
+          "unitId": "unit.void_caller",
+          "col": 1,
+          "row": 0
+        },
+        {
+          "unitId": "unit.archon_of_ash",
+          "col": 2,
+          "row": 0
+        },
+        {
+          "unitId": "unit.void_caller",
+          "col": 3,
+          "row": 0
+        }
+      ],
+      "goldReward": 8,
+      "artKey": "encounter/r9_sundered_sigil"
+    },
+    {
+      "id": "encounter.r10_menagerie",
+      "round": 10,
+      "name": "Hollow Menagerie",
+      "boss": false,
+      "placements": [
+        {
+          "unitId": "unit.alpha_howler",
+          "col": 0,
+          "row": 1
+        },
+        {
+          "unitId": "unit.bramble_stalker",
+          "col": 1,
+          "row": 1
+        },
+        {
+          "unitId": "unit.moss_warden",
+          "col": 2,
+          "row": 1
+        },
+        {
+          "unitId": "unit.bramble_stalker",
+          "col": 3,
+          "row": 1
+        },
+        {
+          "unitId": "unit.alpha_howler",
+          "col": 4,
+          "row": 1
+        },
+        {
+          "unitId": "unit.verdant_colossus",
+          "col": 1,
+          "row": 0
+        },
+        {
+          "unitId": "unit.primal_avatar",
+          "col": 2,
+          "row": 0
+        },
+        {
+          "unitId": "unit.verdant_colossus",
+          "col": 3,
+          "row": 0
+        }
+      ],
+      "goldReward": 8,
+      "artKey": "encounter/r10_menagerie"
+    },
+    {
+      "id": "encounter.r11_court_of_ash",
+      "round": 11,
+      "name": "Court of Ash",
+      "boss": false,
+      "placements": [
+        {
+          "unitId": "unit.rot_knight",
+          "col": 0,
+          "row": 1
+        },
+        {
+          "unitId": "unit.ember_magus",
+          "col": 1,
+          "row": 1
+        },
+        {
+          "unitId": "unit.crypt_weaver",
+          "col": 2,
+          "row": 1
+        },
+        {
+          "unitId": "unit.rot_knight",
+          "col": 3,
+          "row": 1
+        },
+        {
+          "unitId": "unit.plague_hound",
+          "col": 4,
+          "row": 1
+        },
+        {
+          "unitId": "unit.lich_regent",
+          "col": 1,
+          "row": 0
+        },
+        {
+          "unitId": "unit.crypt_weaver",
+          "col": 2,
+          "row": 0
+        },
+        {
+          "unitId": "unit.void_sovereign",
+          "col": 3,
+          "row": 0
+        }
+      ],
+      "goldReward": 9,
+      "artKey": "encounter/r11_court_of_ash"
+    },
+    {
+      "id": "encounter.r12_thrice_bound",
+      "round": 12,
+      "name": "The Thrice-Bound",
+      "boss": true,
+      "placements": [
+        {
+          "unitId": "unit.iron_bulwark",
+          "col": 0,
+          "row": 1
+        },
+        {
+          "unitId": "unit.bone_leviathan",
+          "col": 1,
+          "row": 1
+        },
+        {
+          "unitId": "unit.titan_of_the_forge",
+          "col": 2,
+          "row": 1
+        },
+        {
+          "unitId": "unit.primal_avatar",
+          "col": 3,
+          "row": 1
+        },
+        {
+          "unitId": "unit.rot_knight",
+          "col": 4,
+          "row": 1
+        },
+        {
+          "unitId": "unit.lich_regent",
+          "col": 1,
+          "row": 0
+        },
+        {
+          "unitId": "unit.sovereign_engine",
+          "col": 2,
+          "row": 0
+        },
+        {
+          "unitId": "unit.void_sovereign",
+          "col": 3,
+          "row": 0
+        }
+      ],
+      "goldReward": 15,
+      "artKey": "encounter/r12_thrice_bound"
     }
   ]
 }

@@ -28,6 +28,7 @@ const emptyState: BattleState = {
   units: [],
   periodics: [],
   nextInstanceId: 0,
+    relicIds: [],
   startingHp: { player: 0, enemy: 0 },
   outcome: 'player',
   endReason: 'wipe',

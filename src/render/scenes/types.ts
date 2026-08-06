@@ -9,6 +9,7 @@
 
 import type { Container } from 'pixi.js';
 import type { BattleResult } from '../../core/battle/index';
+import type { RunState } from '../../core/run/index';
 import type { GameData } from '../../data/schema';
 import type { Atlas } from '../atlas';
 import type { Layout } from '../layout';
@@ -45,6 +46,12 @@ export interface SceneContext {
 /** What one scene hands the next. */
 export interface ScenePayload {
   readonly battle?: BattleResult;
+  /** The finished run, handed to `result`. */
+  readonly run?: RunState;
+  /** Continue the saved run instead of starting a new one. */
+  readonly resume?: boolean;
+  /** Seed for a fresh run. Omitted means "pick one". */
+  readonly seed?: number;
 }
 
 export interface Scene {

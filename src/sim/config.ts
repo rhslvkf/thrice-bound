@@ -62,3 +62,62 @@ export const THRESHOLDS = {
 
 /** Percentile marks reported for the battle-length distribution. */
 export const DURATION_PERCENTILES = [10, 25, 50, 75, 90] as const;
+
+/**
+ * The scripted player's policy.
+ *
+ * Weights, not rules: the shop scorer sums them, so the relative sizes are what
+ * matter. `completesMergeScore` dominates everything else on purpose — a third
+ * copy is the only thing that produces a tier 2, and a player who does not
+ * chase pairs loses round 7.
+ */
+export const RUN_POLICY = {
+  /** Added when a slot would put a third copy on the board. */
+  completesMergeScore: 100,
+  /** Added when a slot would put a second copy on the board. */
+  pairsUpScore: 40,
+  /** Per tier, so a tier 2 on the shelf beats a tier 1 all else equal. */
+  tierScore: 12,
+  /** Per unit already carrying one of the slot's tags. */
+  tagFitScore: 3,
+  /** How hard the merge choice leans on tags over raw stats. */
+  mergeSynergyWeight: 10,
+  /** Gold held back from rerolling, so a bad shop cannot empty the purse. */
+  goldReserve: 6,
+  maxRerollsPerRound: 3,
+  /** Loop guards. Reached only by a policy bug, never by ordinary play. */
+  maxShopActions: 40,
+  maxMergesPerRound: 12,
+  maxStepsPerRound: 8,
+} as const;
+
+/**
+ * How long a human spends on each kind of decision, in seconds.
+ *
+ * These are the only estimates in the whole measurement, and they are estimates
+ * — everything else (battle length, number of decisions) is counted exactly by
+ * playing the run. They are stated here rather than buried in the arithmetic so
+ * the number they produce can be argued with.
+ *
+ * Calibrated against how long these actions take in the built game with the
+ * Phase 7 timings: a purchase is a click, a merge is a click plus the 890ms
+ * sequence plus reading two cards, a reward is reading three.
+ */
+export const PACING = {
+  /** Opening a shop and reading five cards before touching anything. */
+  shopReadSeconds: 6,
+  /** One purchase: decide, click. */
+  purchaseSeconds: 1.5,
+  rerollSeconds: 2.5,
+  sellSeconds: 1.5,
+  /** Merge: press, watch the 890ms sequence, choose between two cards. */
+  mergeSeconds: 4,
+  /** Reward: read three relics and pick. The longest single decision. */
+  rewardSeconds: 8,
+  /** Repositioning units on the board, per round. */
+  arrangeSeconds: 4,
+  /** Between the last click and the first blow. */
+  battleStartSeconds: 1,
+  /** Reading the result before the next shop opens. */
+  postBattleSeconds: 2,
+} as const;

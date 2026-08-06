@@ -96,3 +96,32 @@ about 11 seconds.
 Team generation is uniformly random rather than modelling real shop-and-merge
 decisions, so the win rates describe "this unit was on the board", not "a
 player chose this unit". Modelling economy and draft order is the next step.
+
+## Run pacing
+
+A second simulator, for a different question: not "is this unit strong" but "how
+long is a run, and does it stay interesting".
+
+```
+npm run sim:runs -- --runs 1000 --seed 1
+```
+
+It plays whole runs with the scripted player in `runplayer.ts` — a deliberately
+competent-not-optimal policy: chase pairs, merge on sight, take the relic that
+matches the board, do not reroll when broke. An optimal player would report the
+shortest possible run and the highest possible win rate, neither of which is
+what the game will be.
+
+The duration it reports is **half measured and half estimated**, and the split
+matters:
+
+- Measured: battle length (ticks times the tick size is exactly the playback the
+  renderer produces at 1x) and the number of decisions the player made.
+- Estimated: how long each of those decisions takes a human. Those live in
+  `PACING` in `config.ts`, one named constant each, so the model can be argued
+  with rather than trusted.
+
+If the answer comes out wrong the fix is either a content change (fights too
+long) or a re-estimate (people are faster than assumed) — and the report says
+which. `pacing.test.ts` asserts the median lands inside the target band, so a
+content change that pushes runs out of it fails a test rather than a playtest.

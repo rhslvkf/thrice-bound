@@ -33,6 +33,8 @@ export interface BattleContext {
   units: BattleUnit[];
   periodics: ActivePeriodic[];
   nextInstanceId: number;
+  /** The player's relics, in collection order. See `relics.ts`. */
+  readonly relicIds: readonly string[];
   readonly startingHp: Record<Team, number>;
   readonly events: BattleEvent[];
   /**
@@ -155,6 +157,7 @@ export function createContext(data: GameData, state: BattleState): BattleContext
     units: state.units.map(cloneUnit),
     periodics: state.periodics.map(clonePeriodic),
     nextInstanceId: state.nextInstanceId,
+    relicIds: state.relicIds,
     startingHp: { ...state.startingHp },
     events: [],
     pendingTriggers: [],
@@ -173,6 +176,7 @@ export function toState(
     units: ctx.units,
     periodics: ctx.periodics,
     nextInstanceId: ctx.nextInstanceId,
+    relicIds: ctx.relicIds,
     startingHp: ctx.startingHp,
     outcome,
     endReason,

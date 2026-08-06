@@ -1,27 +1,53 @@
 /**
- * The run: place, merge, fight.
+ * The run.
  *
- * Two phases behind one scene.
+ * Twelve rounds of shop -> prep -> battle -> reward, driven entirely by
+ * `src/core/run`. This file holds no game rules: it renders a {@link RunState},
+ * sends player intent back through the run's actions, and re-renders whatever
+ * comes out. A refusal is shown, not worked around.
  *
- * **prep** — the board is the player's to arrange. Cards drag out of the tray,
- * units swap around the board, and three matching copies light up the merge
- * button. Nothing is simulated; this is all composition.
+ * **shop / prep** — the board is the player's to arrange. Cards drag off the
+ * shop row onto cells, units swap around the board, three matching copies light
+ * up the merge button. Nothing is simulated; this is all composition.
  *
- * **battle** — the composition is handed to `runBattle`, which resolves the
- * whole fight in core, and the log it returns is replayed. By the time the
- * first frame of combat is drawn the result is already fixed, so none of the
- * juice below — hitstop, shake, particles, playback speed — can touch it.
+ * **battle** — the composition goes to `runBattle`, which resolves the whole
+ * fight in core, and the log it returns is replayed. By the time the first frame
+ * of combat is drawn the result is fixed, so none of the juice — hitstop, shake,
+ * particles, playback speed — can touch it.
  *
- * That is the line this file is careful about. Everything that decides
- * anything happens in `src/core` before a pixel moves; everything here is
- * feedback about a decision already made.
+ * **reward** — three relics, one taken.
+ *
+ * That is the line this file is careful about. Everything that decides anything
+ * happens in `src/core` before a pixel moves; everything here is feedback about
+ * a decision already made.
  */
 
 import { Container, Graphics, Sprite, Text } from 'pixi.js';
 import type { FederatedPointerEvent } from 'pixi.js';
 import { runBattle } from '../../core/battle/index';
 import type { BattleEvent, BattleResult } from '../../core/battle/index';
-import { createRng } from '../../core/rng';
+import {
+  battleSetupFor,
+  buyUnit,
+  chooseReward,
+  mergeUnits,
+  moveUnit,
+  rerollShop,
+  resolveBattle,
+  sellUnit,
+  skipReward,
+  startBattle,
+  startRun,
+  toggleLock,
+  unitAt,
+} from '../../core/run/index';
+import type {
+  Cell,
+  MergeOpportunity,
+  RunActionResult,
+  RunState,
+} from '../../core/run/index';
+import { RunSaveStore } from '../../meta/save';
 import type { UnitDef } from '../../data/schema';
 import { BoardView } from '../board';
 import { Camera } from '../camera';
@@ -32,11 +58,11 @@ import { placeCell } from '../layout';
 import type { Layout } from '../layout';
 import { MergeSequence } from '../merge/MergeSequence';
 import { ParticleSystem } from '../particles';
-import { BoardComposition } from '../prep/BoardComposition';
-import type { MergeOpportunity, Slot } from '../prep/BoardComposition';
 import { PrepController } from '../prep/PrepController';
 import { BattleReplayer } from '../replay/BattleReplayer';
 import type { UnitVisual } from '../replay/BattleReplayer';
+import { RewardPanel } from '../run/RewardPanel';
+import { RunHud } from '../run/RunHud';
 import { tuning } from '../tuning';
 import { TweenManager } from '../tween';
 import { UnitPool } from '../units/UnitPool';
@@ -45,19 +71,14 @@ import type { Scene, SceneContext, ScenePayload } from './types';
 /** Height of the team strength bar, relative to cell size. */
 const STRENGTH_BAR_HEIGHT = 0.14;
 const LABEL_SIZE = 15;
-/** Units the enemy fields. No encounter table is wired to the run yet. */
-const ENEMY_TEAM_SIZE = 6;
 /** Death burst sizes, as fractions of a cell. */
 const DEATH_PARTICLE = { from: 0.13, to: 0.02, lifeMs: 420 } as const;
 /** Synergy ring sizes, as fractions of a cell. */
 const SYNERGY_RING = { from: 0.3 } as const;
-/** Chance a tray draw is the currently featured unit, and that it rotates. */
-const FEATURED_CHANCE = 0.55;
-const FEATURED_REROLL_CHANCE = 0.12;
+/** How long a refusal stays on screen. */
+const NOTICE_MS = 2200;
 
-type Phase = 'prep' | 'battle';
-
-const slotKey = (slot: Slot): string => `${slot.col},${slot.row}`;
+const cellKey = (cell: Cell): string => `${cell.col},${cell.row}`;
 
 export class RunScene implements Scene {
   readonly id = 'run' as const;
@@ -77,25 +98,33 @@ export class RunScene implements Scene {
   private readonly hitstop = new Hitstop();
   private readonly camera: Camera;
   private readonly pool: UnitPool;
-  private readonly board: BoardComposition;
   private readonly prep: PrepController;
   private readonly merge: MergeSequence;
+  private readonly hud: RunHud;
+  private readonly rewards: RewardPanel;
+  private readonly saves: RunSaveStore;
 
   private readonly strengthTrack: Sprite;
   private readonly playerStrength: Sprite;
   private readonly enemyStrength: Sprite;
   private readonly hint: Text;
+  private readonly notice: Text;
   private readonly prepBackdrop = new Graphics();
 
-  private phase: Phase = 'prep';
-  private shopRng = createRng(1);
-  private featured: UnitDef | null = null;
+  /**
+   * The run.
+   *
+   * The single source of truth for this scene. Every action replaces it
+   * wholesale; nothing else in the renderer holds a piece of it.
+   */
+  private run: RunState;
   private replayer: BattleReplayer | null = null;
   private result: BattleResult | null = null;
   private speedIndex = 0;
   private nowMs = 0;
+  private noticeUntilMs = 0;
 
-  /** Static view models for units sitting on the board during prep. */
+  /** Static view models for units sitting on the board between fights. */
   private readonly prepVisuals = new Map<string, UnitVisual>();
 
   private readonly onKey = (event: KeyboardEvent): void => this.handleKey(event);
@@ -114,21 +143,22 @@ export class RunScene implements Scene {
 
     this.pool = new UnitPool(context.atlas, this.unitLayer);
     this.camera = new Camera(this.world);
-    this.board = new BoardComposition(context.data);
+    this.saves = new RunSaveStore(context.data);
+    this.run = startRun(context.data, 1);
 
     this.prep = new PrepController(
       context.data,
       context.atlas,
       context.textures,
       this.tweens,
-      this.board,
       {
+        onBuy: (index, target) => this.buy(index, target),
+        onMove: (from, to) => this.apply(moveUnit(this.run, from, to)),
+        onSell: (cell) => this.apply(sellUnit(context.data, this.run, cell)),
+        onToggleLock: (index) => this.apply(toggleLock(this.run, index)),
+        onReroll: () => this.apply(rerollShop(context.data, this.run)),
         onMerge: (opportunity) => this.startMerge(opportunity),
-        onFight: () => this.startBattle(),
-        onBoardChanged: () => {
-          this.rebuildPrepViews();
-          this.prep.refillEmpty(() => this.drawUnit());
-        },
+        onFight: () => this.beginBattle(),
       },
       context.layout,
     );
@@ -146,6 +176,14 @@ export class RunScene implements Scene {
       getLayout: () => this.context.layout,
     });
 
+    this.hud = new RunHud(context.data, context.atlas, context.layout);
+    this.rewards = new RewardPanel(
+      context.data,
+      context.layout,
+      (relicId) => this.apply(chooseReward(context.data, this.run, relicId)),
+      () => this.apply(skipReward(context.data, this.run)),
+    );
+
     this.strengthTrack = new Sprite(context.atlas.pixel);
     this.playerStrength = new Sprite(context.atlas.pixel);
     this.enemyStrength = new Sprite(context.atlas.pixel);
@@ -162,21 +200,42 @@ export class RunScene implements Scene {
       style: { fill: COLORS.textDim, fontSize: LABEL_SIZE, fontFamily: 'system-ui' },
     });
     this.hint.anchor.set(0.5, 0);
-    this.overlay.addChild(this.strengthTrack, this.playerStrength, this.enemyStrength, this.hint);
+    this.notice = new Text({
+      text: '',
+      style: { fill: COLORS.dropInvalid, fontSize: LABEL_SIZE, fontFamily: 'system-ui' },
+    });
+    this.notice.anchor.set(0.5, 0);
+    this.notice.visible = false;
+
+    this.overlay.addChild(
+      this.strengthTrack,
+      this.playerStrength,
+      this.enemyStrength,
+      this.hint,
+      this.notice,
+      this.hud.root,
+    );
+    this.view.addChild(this.rewards.root);
 
     // Drags are tracked on the scene rather than per card: a pointer that
-    // leaves the card it grabbed must still be followed, and released
-    // anywhere must still resolve.
+    // leaves the card it grabbed must still be followed, and released anywhere
+    // must still resolve.
     this.view.eventMode = 'static';
     this.view.on('globalpointermove', this.onPointerMove);
     this.view.on('pointerup', this.onPointerUp);
     this.view.on('pointerupoutside', this.onPointerUp);
   }
 
-  enter(_payload: ScenePayload): void {
-    this.phase = 'prep';
+  /**
+   * Starts or resumes a run.
+   *
+   * `payload.resume` continues the saved run; otherwise a fresh one is rolled
+   * from `payload.seed`, or from a seed derived at call time when none is
+   * given. The seed is the only thing that varies between two runs of this
+   * build, which is what makes a shared seed worth anything.
+   */
+  enter(payload: ScenePayload): void {
     this.nowMs = 0;
-    this.board.clear();
     this.prepVisuals.clear();
     this.pool.releaseAll();
     this.particles.clear();
@@ -184,15 +243,23 @@ export class RunScene implements Scene {
     this.tweens.cancelAll();
     this.hitstop.clear();
     this.camera.reset();
+    this.merge.cancel();
+    this.rewards.hide();
     this.replayer = null;
     this.result = null;
 
-    this.shopRng = createRng(Date.now() % 0xffff_ffff);
-    this.prep.refillTray(() => this.drawUnit());
+    const resumed = payload.resume === true ? this.saves.load() : null;
+    if (resumed !== null) {
+      this.run = resumed;
+    } else {
+      const seed = payload.seed ?? rollSeed();
+      this.run = startRun(this.context.data, seed);
+      this.saves.save(this.run);
+    }
+
     this.prep.setEnabled(true);
-    this.prep.refreshMerges();
+    this.syncFromRun();
     this.setStrengthVisible(false);
-    this.updateHint();
 
     globalThis.addEventListener('keydown', this.onKey);
   }
@@ -220,11 +287,10 @@ export class RunScene implements Scene {
     this.particles.update(deltaMs, cell);
     this.damageNumbers.update(deltaMs, cell);
 
-    if (this.phase === 'prep') {
-      this.updatePrep();
-    } else {
-      this.updateBattle(deltaMs);
-    }
+    if (this.notice.visible && this.nowMs > this.noticeUntilMs) this.notice.visible = false;
+
+    if (this.run.phase === 'battle') this.updateBattle(deltaMs);
+    else this.updatePrep();
 
     this.camera.update(deltaMs, cell);
   }
@@ -232,6 +298,8 @@ export class RunScene implements Scene {
   resize(layout: Layout): void {
     this.boardView.resize(layout);
     this.prep.resize(layout);
+    this.hud.resize(layout);
+    this.rewards.resize(layout);
 
     const barHeight = layout.cellSize * STRENGTH_BAR_HEIGHT;
     const barY = layout.safe.y + barHeight;
@@ -243,11 +311,11 @@ export class RunScene implements Scene {
     this.enemyStrength.position.set(layout.safe.x + layout.safe.width, barY);
     this.enemyStrength.height = barHeight;
 
+    const hintY = layout.board.y + layout.board.height + layout.cellSize * 2.62;
     this.hint.style.fontSize = LABEL_SIZE * layout.uiScale;
-    this.hint.position.set(
-      layout.width / 2,
-      layout.board.y + layout.board.height + layout.cellSize * 2.55,
-    );
+    this.hint.position.set(layout.width / 2, hintY);
+    this.notice.style.fontSize = LABEL_SIZE * layout.uiScale;
+    this.notice.position.set(layout.width / 2, hintY);
 
     this.prepBackdrop.clear();
   }
@@ -255,6 +323,8 @@ export class RunScene implements Scene {
   destroy(): void {
     this.prep.destroy();
     this.merge.destroy();
+    this.hud.destroy();
+    this.rewards.destroy();
     this.pool.destroy();
     this.particles.destroy();
     this.damageNumbers.destroy();
@@ -263,43 +333,101 @@ export class RunScene implements Scene {
   }
 
   // -------------------------------------------------------------------------
-  // Prep
+  // Run state
   // -------------------------------------------------------------------------
 
   /**
-   * Draws a unit for the tray.
+   * Applies an action's outcome.
    *
-   * Weighted so the same unit comes up often. A merge needs three of a kind,
-   * and a uniform draw across a 28-unit roster would take a very long time to
-   * produce that — which would make the game's signature moment something you
-   * rarely see. A real shop would tie this to tier odds and gold; this is
-   * standing in until there is one.
+   * A refusal is shown to the player and otherwise ignored — core already
+   * declined to change anything, so there is nothing to undo. That is why the
+   * run actions return a reason rather than throwing: a full board is a normal
+   * thing to attempt, not an exception.
    */
-  private drawUnit(): UnitDef {
-    const mergeable = [...this.context.data.units.values()].filter(
-      (unit) => unit.mergesInto.length > 1 && unit.tier === 1,
-    );
-    const pool = mergeable.length > 0 ? mergeable : [...this.context.data.units.values()];
-    if (this.featured === null || this.shopRng.nextBool(FEATURED_REROLL_CHANCE)) {
-      this.featured = this.shopRng.pick(pool);
+  private apply(result: RunActionResult): void {
+    if (!result.ok) {
+      this.showNotice(result.reason);
+      return;
     }
-    return this.shopRng.nextBool(FEATURED_CHANCE)
-      ? this.featured
-      : this.shopRng.pick(pool);
+    this.run = result.state;
+    this.saves.save(this.run);
+    this.syncFromRun();
   }
+
+  /** Re-reads everything that renders the run. Never called per frame. */
+  private syncFromRun(): void {
+    this.hud.sync(this.run);
+    this.prep.sync(this.run);
+    this.rebuildPrepViews();
+
+    if (this.run.phase === 'reward' && this.run.rewardOffer !== null) {
+      this.rewards.show(this.run.rewardOffer);
+      this.prep.setEnabled(false);
+    } else {
+      this.rewards.hide();
+      this.prep.setEnabled(this.run.phase === 'shop' || this.run.phase === 'prep');
+    }
+
+    if (this.run.phase === 'over') {
+      this.context.goTo('result', { run: this.run });
+      return;
+    }
+    this.updateHint();
+  }
+
+  /**
+   * Buys a shop slot and puts it where it was dropped.
+   *
+   * Core places a purchase in the first free cell — it has no notion of where a
+   * pointer was — so the drop target is honoured with a follow-up move. Two
+   * actions rather than one because "buy" and "arrange" are separately legal,
+   * and neither needs to know about the other.
+   */
+  private buy(slotIndex: number, target: Cell | null): void {
+    const before = this.run;
+    const bought = buyUnit(this.context.data, before, slotIndex);
+    if (!bought.ok) {
+      this.showNotice(bought.reason);
+      return;
+    }
+
+    let next = bought.state;
+    if (target !== null) {
+      const landed = findNewUnit(before, next);
+      if (landed !== null && cellKey(landed) !== cellKey(target)) {
+        const moved = moveUnit(next, landed, target);
+        if (moved.ok) next = moved.state;
+      }
+    }
+
+    this.run = next;
+    this.saves.save(this.run);
+    this.syncFromRun();
+  }
+
+  private showNotice(reason: string): void {
+    this.notice.text = reason;
+    this.notice.visible = true;
+    this.noticeUntilMs = this.nowMs + NOTICE_MS;
+  }
+
+  // -------------------------------------------------------------------------
+  // Prep
+  // -------------------------------------------------------------------------
 
   /** Rebuilds the static views for whatever is on the board. */
   private rebuildPrepViews(): void {
+    if (this.run.phase === 'battle') return;
     const present = new Set<string>();
 
-    for (const { slot, unitId } of this.board.occupied()) {
-      const key = slotKey(slot);
+    for (const slot of this.run.board) {
+      const key = cellKey(slot);
       present.add(key);
-      const def = this.context.data.units.get(unitId);
+      const def = this.context.data.units.get(slot.unitId);
       if (def === undefined) continue;
 
       let visual = this.prepVisuals.get(key);
-      if (visual === undefined || visual.defId !== unitId) {
+      if (visual === undefined || visual.defId !== slot.unitId) {
         visual = this.makePrepVisual(def, slot, key);
         this.prepVisuals.set(key, visual);
       }
@@ -311,12 +439,12 @@ export class RunScene implements Scene {
       const view = this.pool.acquire(visual.instanceId);
       view.bind(visual, this.context.textures.resolve(def), COLORS.team.player);
       // Picking a unit up off the board is the same gesture as picking one out
-      // of the tray, so the view carries the same handler.
+      // of the shop, so the view carries the same handler.
       view.root.eventMode = 'static';
       view.root.cursor = 'grab';
       view.root.removeAllListeners('pointerdown');
       view.root.on('pointerdown', (event: FederatedPointerEvent) =>
-        this.prep.beginBoardDrag(slot, event),
+        this.prep.beginBoardDrag({ col: slot.col, row: slot.row }, event),
       );
     }
 
@@ -325,7 +453,6 @@ export class RunScene implements Scene {
       this.pool.release(visual.instanceId);
       this.prepVisuals.delete(key);
     }
-    this.updateHint();
   }
 
   /**
@@ -336,7 +463,7 @@ export class RunScene implements Scene {
    * bars, same tags — rather than having a second way to draw a unit that
    * drifts out of step with the first.
    */
-  private makePrepVisual(def: UnitDef, slot: Slot, key: string): UnitVisual {
+  private makePrepVisual(def: UnitDef, cell: Cell, key: string): UnitVisual {
     return {
       instanceId: this.prepInstanceId(key),
       defId: def.id,
@@ -344,14 +471,14 @@ export class RunScene implements Scene {
       team: 'player',
       tier: def.tier,
       tags: def.tags,
-      col: slot.col,
-      row: slot.row,
-      fromCol: slot.col,
-      fromRow: slot.row,
+      col: cell.col,
+      row: cell.row,
+      fromCol: cell.col,
+      fromRow: cell.row,
       moveStartMs: 0,
       moveEndMs: 0,
-      renderCol: slot.col,
-      renderRow: slot.row,
+      renderCol: cell.col,
+      renderRow: cell.row,
       hp: def.stats.hp,
       maxHp: def.stats.hp,
       hpDisplay: def.stats.hp,
@@ -391,8 +518,8 @@ export class RunScene implements Scene {
       view.root.zIndex = visual.renderRow;
 
       // The merge landing punch, applied to whichever unit just arrived.
-      const landing = this.merge.landingSlot;
-      if (landing !== null && slotKey(landing) === key && this.merge.landingProgress !== null) {
+      const landing = this.merge.landingCell;
+      if (landing !== null && cellKey(landing) === key && this.merge.landingProgress !== null) {
         view.setPunch(MergeSequence.landingScale(this.merge.landingProgress));
       } else {
         view.setPunch(1);
@@ -404,60 +531,50 @@ export class RunScene implements Scene {
   private startMerge(opportunity: MergeOpportunity): void {
     if (this.merge.isRunning) return;
 
-    const subjects = opportunity.slots
-      .map((slot) => {
-        const visual = this.prepVisuals.get(slotKey(slot));
+    const subjects = opportunity.cells
+      .map((cell) => {
+        const visual = this.prepVisuals.get(cellKey(cell));
         const view = visual === undefined ? undefined : this.pool.get(visual.instanceId);
-        return view === undefined ? null : { slot, node: view.root };
+        return view === undefined ? null : { cell, node: view.root };
       })
-      .filter((subject): subject is { slot: Slot; node: Container } => subject !== null);
+      .filter((subject): subject is { cell: Cell; node: Container } => subject !== null);
 
     this.prep.setEnabled(false);
     this.merge.play(opportunity, subjects, (chosen) => {
-      this.board.applyMerge(opportunity, chosen);
       // The consumed copies are gone from the board, so their views retire and
       // the winner's view is built here — in time for the landing punch.
-      for (const slot of opportunity.slots) {
-        const key = slotKey(slot);
+      for (const cell of opportunity.cells) {
+        const key = cellKey(cell);
         const visual = this.prepVisuals.get(key);
         if (visual !== undefined) {
           this.pool.release(visual.instanceId);
           this.prepVisuals.delete(key);
         }
       }
-      this.rebuildPrepViews();
+      this.apply(mergeUnits(this.context.data, this.run, opportunity.unitId, chosen.id));
       this.prep.setEnabled(true);
-      this.prep.refreshMerges();
     });
   }
 
-  private startBattle(): void {
-    if (this.board.size === 0) return;
+  private beginBattle(): void {
+    const started = startBattle(this.run);
+    if (!started.ok) {
+      this.showNotice(started.reason);
+      return;
+    }
 
-    this.phase = 'battle';
+    this.run = started.state;
     this.prep.setEnabled(false);
     this.pool.releaseAll();
     this.prepVisuals.clear();
 
-    const rng = createRng(Date.now() % 0xffff_ffff);
-    const ids = [...this.context.data.units.keys()].sort();
-    const enemyRows = [0, 1];
-    const enemy = Array.from({ length: ENEMY_TEAM_SIZE }, (_, i) => ({
-      unitId: rng.pick(ids),
-      col: i % 5,
-      row: enemyRows[Math.floor(i / 5) % enemyRows.length] ?? 0,
-    }));
-
-    this.result = runBattle(this.context.data, {
-      seed: Date.now() % 0xffff_ffff,
-      player: this.board.toDeployments(),
-      enemy,
-    });
+    this.result = runBattle(this.context.data, battleSetupFor(this.context.data, this.run));
     this.replayer = new BattleReplayer(this.result, this.context.data);
     this.replayer.setObserver((event, atMs) => this.onBattleEvent(event, atMs));
     this.speedIndex = 0;
     this.replayer.setSpeed(REPLAY_SPEEDS[0] ?? 1);
     this.setStrengthVisible(true);
+    this.hud.sync(this.run);
     this.updateHint();
   }
 
@@ -475,7 +592,16 @@ export class RunScene implements Scene {
     this.syncStrengthBar();
 
     if (replayer.finished && this.result !== null) {
-      this.context.goTo('result', { battle: this.result });
+      const result = this.result;
+      this.result = null;
+      this.replayer = null;
+      this.setStrengthVisible(false);
+      this.pool.releaseAll();
+      // The fight was decided before the first frame of it was drawn; this is
+      // where the run finally hears about it.
+      this.run = resolveBattle(this.context.data, this.run, result);
+      this.saves.save(this.run);
+      this.syncFromRun();
     }
   }
 
@@ -572,10 +698,10 @@ export class RunScene implements Scene {
    * Whether a hit is worth calling out.
    *
    * Core has no crit system, so there is no flag in the log to read. What the
-   * log does show is how hard a blow landed relative to what that unit hits
-   * for normally, and an ability or a buffed swing that clears the threshold
-   * is exactly the moment worth emphasising. It is presentation reading the
-   * data it has, not an invented mechanic.
+   * log does show is how hard a blow landed relative to what that unit hits for
+   * normally, and an ability or a buffed swing that clears the threshold is
+   * exactly the moment worth emphasising. It is presentation reading the data
+   * it has, not an invented mechanic.
    */
   private isBigHit(event: Extract<BattleEvent, { kind: 'damage' }>): boolean {
     if (event.sourceId === null) return false;
@@ -634,7 +760,7 @@ export class RunScene implements Scene {
   // -------------------------------------------------------------------------
 
   private handleKey(event: KeyboardEvent): void {
-    if (this.phase !== 'battle') return;
+    if (this.run.phase !== 'battle') return;
     if (event.key === ' ' || event.key === 'Enter') this.cycleSpeed();
     if (event.key === 's' || event.key === 'S') this.skip();
   }
@@ -656,14 +782,41 @@ export class RunScene implements Scene {
   }
 
   private updateHint(): void {
-    if (this.phase === 'prep') {
+    if (this.run.phase === 'battle') {
+      const speed = REPLAY_SPEEDS[this.speedIndex];
       this.hint.text =
-        this.board.size === 0
-          ? 'drag a card onto your half of the board'
-          : 'three of a kind unlocks MERGE  ·  FIGHT when ready';
+        speed === undefined ? 'skipping' : `${speed}x  ·  space to change speed`;
       return;
     }
-    const speed = REPLAY_SPEEDS[this.speedIndex];
-    this.hint.text = speed === undefined ? 'skipping' : `${speed}x  ·  space to change speed`;
+    if (this.run.phase === 'reward') {
+      this.hint.text = '';
+      return;
+    }
+    this.hint.text =
+      this.run.board.length === 0
+        ? 'drag a unit onto your half of the board'
+        : 'three of a kind unlocks MERGE  ·  FIGHT when ready';
   }
+}
+
+/** The cell a purchase landed in: the one the new board has and the old did not. */
+function findNewUnit(before: RunState, after: RunState): Cell | null {
+  for (const slot of after.board) {
+    if (unitAt(before.board, slot.col, slot.row) === null) {
+      return { col: slot.col, row: slot.row };
+    }
+  }
+  return null;
+}
+
+/**
+ * A seed for a fresh run.
+ *
+ * The one place the renderer is allowed to read a clock, and only to *pick* a
+ * seed — once chosen it goes into core and everything downstream is derived
+ * from it. A daily challenge replaces this call with a date-derived seed and
+ * nothing else changes.
+ */
+function rollSeed(): number {
+  return (Date.now() ^ Math.floor(Math.random() * 0xffff_ffff)) >>> 0;
 }

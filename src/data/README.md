@@ -46,6 +46,9 @@ history stays readable separately from code history.
   `loadBundledGameData()` (cached) and `loadGameData(raw)`.
 - `units.json` — 28 units: 8 at tier 1, 12 at tier 2, 8 at tier 3.
 - `abilities.json`, `synergies.json`, `relics.json`, `encounters.json`.
+- `run.json` — the run's rules: round count, boss rounds, starting lives and
+  gold, income and interest, reroll cost, reward weighting, and the shop tier
+  probability table (one row per round).
 
 ## The merge graph
 
@@ -64,3 +67,14 @@ composable `Effect` objects — `damage`, `heal`, `shield`, `statMod`, `status`,
 `summon`, and `periodic` (which nests others to express regeneration and
 damage-over-time). Adding an ability should be a data edit; only a genuinely
 new *kind* of effect requires a change in `src/core`.
+
+## run.json
+
+The one file that says how long a run is, so everything else has to line up
+with it. The loader checks that: an encounter exists for every round, each
+encounter's `boss` flag matches `rules.bossRounds`, there is a shop-odds row per
+round, and every relic rarity has a weight — a rarity with no weight is a relic
+that can never be offered.
+
+`shopTierOdds` holds weights rather than percentages, so a relic that multiplies
+one of them does not have to keep the row summing to 100.

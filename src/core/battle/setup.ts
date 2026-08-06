@@ -11,6 +11,7 @@ import type { BattleContext } from './context';
 import { createContext, emit, toState } from './context';
 import type { BattleEvent } from './events';
 import { isOnBoard, occupantAt } from './grid';
+import { applyBattleStartRelics } from './relics';
 import { spawnUnit } from './spawn';
 import { applySynergies } from './synergy';
 import { totalHpByTeam } from './tick';
@@ -30,6 +31,12 @@ export interface BattleSetup {
   readonly seed: number;
   readonly player: readonly Deployment[];
   readonly enemy: readonly Deployment[];
+  /**
+   * The player's relics, in collection order. Omitted means none, which is how
+   * the balance simulator runs — a matchup with no relics must produce exactly
+   * the numbers it produced before relics existed.
+   */
+  readonly relicIds?: readonly string[];
 }
 
 /** Tick 0: the state the battle begins from, and the events that set it up. */
@@ -84,6 +91,7 @@ export function createBattle(data: GameData, setup: BattleSetup): BattleStart {
     units: [],
     periodics: [],
     nextInstanceId: 0,
+    relicIds: setup.relicIds ?? [],
     startingHp: { player: 0, enemy: 0 },
     outcome: null,
     endReason: null,
@@ -104,6 +112,10 @@ export function createBattle(data: GameData, setup: BattleSetup): BattleStart {
   }
 
   applySynergies(ctx);
+  // After synergies, so a relic gated on a tag count reads the same board the
+  // synergy did, and before `startingHp` is measured below, so a relic that
+  // adds max HP counts toward the timeout rule.
+  applyBattleStartRelics(ctx);
   drainTriggers(ctx);
 
   // Measured after battle-start effects, so a Steel board's +10% max HP counts

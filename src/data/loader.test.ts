@@ -230,9 +230,9 @@ describe('reference validation', () => {
 
   it('rejects a relic granting an unknown unit', () => {
     const issues = issuesFrom((c) => {
-      const relic = find(c, 'relics', 'relic.thrice_bound_seal');
+      const relic = find(c, 'relics', 'relic.stray_conscript');
       const hook = at(relic['hooks'] as Record<string, unknown>[], 0);
-      at(hook['actions'] as Record<string, unknown>[], 1)['unitId'] = 'unit.ghost';
+      at(hook['actions'] as Record<string, unknown>[], 0)['unitId'] = 'unit.ghost';
     });
     expect(issues[0]).toContain('grants unknown unit "unit.ghost"');
   });

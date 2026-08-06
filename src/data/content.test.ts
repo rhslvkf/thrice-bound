@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadBundledGameData, mergeOptionsOf } from './loader';
 import {
+  BOARD,
   MAX_TIER,
   MIN_MERGE_OPTIONS,
   MIN_TIER,
@@ -300,9 +301,48 @@ describe('encounters', () => {
   });
 
   it('grows in reward as rounds progress', () => {
-    const rewards = data.encounters.map((e) => e.goldReward);
-    for (let i = 1; i < rewards.length; i += 1) {
-      expect(rewards[i] as number).toBeGreaterThan(rewards[i - 1] as number);
+    // Not monotonic per round: a boss pays a premium, so the round after one
+    // drops back. The rule that matters is that the ordinary rounds keep
+    // climbing and that a boss out-pays the round before it.
+    const ordinary = data.encounters.filter((e) => !e.boss);
+    for (let i = 1; i < ordinary.length; i += 1) {
+      const previous = ordinary[i - 1];
+      const current = ordinary[i];
+      expect(previous).toBeDefined();
+      expect(current).toBeDefined();
+      if (previous === undefined || current === undefined) continue;
+      expect(
+        current.goldReward,
+        `${current.id} pays less than ${previous.id}`,
+      ).toBeGreaterThanOrEqual(previous.goldReward);
+    }
+
+    for (const boss of data.encounters.filter((e) => e.boss)) {
+      const before = data.encounters.find((e) => e.round === boss.round - 1);
+      if (before === undefined) continue;
+      expect(boss.goldReward, `${boss.id} pays no premium`).toBeGreaterThan(
+        before.goldReward,
+      );
+    }
+  });
+
+  it('covers every round exactly once, with bosses where run.json says', () => {
+    const rounds = data.encounters.map((e) => e.round);
+    expect(rounds).toEqual(
+      Array.from({ length: data.run.rules.rounds }, (_, i) => i + 1),
+    );
+    expect(data.encounters.filter((e) => e.boss).map((e) => e.round)).toEqual([
+      ...data.run.rules.bossRounds,
+    ]);
+  });
+
+  it('makes every round beatable in principle — enemies fit on their half', () => {
+    const capacity = BOARD.cols * BOARD.enemyRows.length;
+    for (const encounter of data.encounters) {
+      expect(
+        encounter.placements.length,
+        `${encounter.id} places more enemies than the board holds`,
+      ).toBeLessThanOrEqual(capacity);
     }
   });
 });

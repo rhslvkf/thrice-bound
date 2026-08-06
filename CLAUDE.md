@@ -122,3 +122,4 @@ Rules:
 | `npm test`       | Vitest, single run                            |
 | `npm run smoke`  | Build, then check the built game actually runs |
 | `npm run sim`    | Headless balance simulator + balance report   |
+| `npm run sim:runs` | Plays whole runs headless; reports run pacing |

@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "rules": {
+    "rounds": 12,
+    "bossRounds": [3, 7, 12],
+    "startingLives": 20,
+    "startingGold": 8,
+    "baseIncome": 4,
+    "incomePerRound": 1,
+    "winBonusGold": 2,
+    "interestPerGold": 10,
+    "interestCap": 4,
+    "rerollCost": 2,
+    "shopSlots": 5,
+    "rewardChoices": 3,
+    "rewardRandomShare": 0.2,
+    "rewardTagAffinity": 0.45,
+    "sellRefundShare": 0.5
+  },
+  "rarityWeights": [
+    { "rarity": "common", "weight": 60, "minRound": 1 },
+    { "rarity": "rare", "weight": 30, "minRound": 2 },
+    { "rarity": "legendary", "weight": 10, "minRound": 6 }
+  ],
+  "shopTierOdds": [
+    { "round": 1, "tier1": 100, "tier2": 0, "tier3": 0 },
+    { "round": 2, "tier1": 100, "tier2": 0, "tier3": 0 },
+    { "round": 3, "tier1": 85, "tier2": 15, "tier3": 0 },
+    { "round": 4, "tier1": 75, "tier2": 25, "tier3": 0 },
+    { "round": 5, "tier1": 65, "tier2": 35, "tier3": 0 },
+    { "round": 6, "tier1": 55, "tier2": 45, "tier3": 0 },
+    { "round": 7, "tier1": 46, "tier2": 50, "tier3": 4 },
+    { "round": 8, "tier1": 38, "tier2": 54, "tier3": 8 },
+    { "round": 9, "tier1": 32, "tier2": 56, "tier3": 12 },
+    { "round": 10, "tier1": 27, "tier2": 57, "tier3": 16 },
+    { "round": 11, "tier1": 22, "tier2": 58, "tier3": 20 },
+    { "round": 12, "tier1": 18, "tier2": 57, "tier3": 25 }
+  ]
+}

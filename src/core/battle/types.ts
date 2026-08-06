@@ -141,6 +141,14 @@ export interface BattleState {
   readonly units: readonly BattleUnit[];
   readonly periodics: readonly ActivePeriodic[];
   readonly nextInstanceId: number;
+  /**
+   * The player's relics, in the order they were collected.
+   *
+   * Ids rather than definitions, so the state stays JSON-serializable, and an
+   * array rather than a set so hook order is fixed — two relics that both fire
+   * on the same trigger must resolve the same way on every replay.
+   */
+  readonly relicIds: readonly string[];
   /** Total starting max HP per team, used by the timeout rule. */
   readonly startingHp: Readonly<Record<Team, number>>;
   /** `null` while the battle is still running. */
